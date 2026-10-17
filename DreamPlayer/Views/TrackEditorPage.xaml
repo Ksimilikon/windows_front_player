@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EDIT TRACK: the editable tags and user fields; technical ones read-only. -->
+<UserControl
+    x:Class="DreamPlayer.Views.TrackEditorPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DreamPlayer">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Padding="24" ColumnSpacing="24" MaxWidth="1100" HorizontalAlignment="Left">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Spacing="14">
+                <TextBlock x:Name="Heading" FontSize="22" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBox x:Name="TitleBox" Header="{x:Bind local:L.T('meta.title')}" />
+                <TextBox x:Name="ArtistsBox" Header="{x:Bind local:L.T('meta.artists')}" PlaceholderText="{x:Bind local:L.T('editor.comma_hint')}" />
+                <TextBox x:Name="AlbumBox" Header="{x:Bind local:L.T('meta.album')}" />
+                <TextBox x:Name="GenresBox" Header="{x:Bind local:L.T('meta.genres')}" PlaceholderText="{x:Bind local:L.T('editor.comma_hint')}" />
+                <TextBox x:Name="LabelBox" Header="{x:Bind local:L.T('meta.label')}" />
+
+                <!-- color label -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Bind local:L.T('meta.color')}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <DropDownButton x:Name="ColorButton" Padding="6">
+                            <Border x:Name="ColorSwatch" Width="28" Height="20" CornerRadius="3" BorderBrush="{StaticResource DpBorder}" BorderThickness="1" />
+                            <DropDownButton.Flyout>
+                                <Flyout>
+                                    <ColorPicker
+                                        x:Name="Picker"
+                                        IsAlphaEnabled="False"
+                                        IsMoreButtonVisible="False"
+                                        IsColorSliderVisible="True"
+                                        ColorChanged="Picker_ColorChanged" />
+                                </Flyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                        <TextBox x:Name="ColorBox" Width="120" PlaceholderText="#RRGGBB" TextChanged="ColorBox_TextChanged" />
+                        <Button Click="ClearColor_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}">
+                            <FontIcon Glyph="&#xE711;" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- cover file -->
+                <Grid ColumnSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="CoverBox" Header="{x:Bind local:L.T('meta.cover')}" PlaceholderText="{x:Bind local:L.T('meta.cover_embedded')}" />
+                    <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14" />
+                    </Button>
+                    <Button Grid.Column="2" VerticalAlignment="Bottom" Click="ClearCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}">
+                        <FontIcon Glyph="&#xE711;" FontSize="14" />
+                    </Button>
+                </Grid>
+
+                <!-- file path (after the file was moved / renamed on disk) -->
+                <Grid ColumnSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="PathBox" Header="{x:Bind local:L.T('meta.path')}" Description="{x:Bind local:L.T('editor.path_hint')}" />
+                    <Button Grid.Column="1" Margin="0,0,0,22" VerticalAlignment="Bottom" Click="BrowsePath_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14" />
+                    </Button>
+                </Grid>
+
+                <CheckBox x:Name="InvalidBox" Content="{x:Bind local:L.T('editor.invalid')}" />
+
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                    <Button x:Name="SaveButton" Style="{StaticResource AccentButtonStyle}" Click="Save_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                            <TextBlock Text="{x:Bind local:L.T('common.save')}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{x:Bind local:L.T('common.cancel')}" Click="Cancel_Click" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- read-only -->
+            <Border Grid.Column="1" VerticalAlignment="Top" Style="{StaticResource DpPane}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{x:Bind local:L.T('editor.readonly')}" Style="{StaticResource DpPaneTitle}" />
+                    <Grid x:Name="ReadOnlyGrid" ColumnSpacing="12" RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

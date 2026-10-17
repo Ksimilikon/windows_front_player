@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NOW PLAYING: the queue of the playing playlist. Drag-n-drop reorders it
+     for this session only; "save order" writes it to the db. -->
+<UserControl
+    x:Class="DreamPlayer.Views.NowPlayingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DreamPlayer"
+    xmlns:views="using:DreamPlayer.Views"
+    xmlns:svc="using:DreamPlayer.Services">
+
+    <Border Margin="12" Style="{StaticResource DpPane}">
+        <Grid RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText" FontSize="22" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="InfoText" Style="{StaticResource DpMuted}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Click="ScrollToCurrent_Click" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('now.to_current')}">
+                        <FontIcon Glyph="&#xE81D;" FontSize="14" />
+                    </Button>
+                    <Button Click="Edit_Click" x:Name="EditButton" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.edit')}">
+                        <FontIcon Glyph="&#xE70F;" FontSize="14" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- the order differs from the db one -->
+            <Border
+                x:Name="DirtyBar"
+                Grid.Row="1"
+                Padding="12,8"
+                CornerRadius="6"
+                Background="#3A3112"
+                Visibility="Collapsed">
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{StaticResource DpWarning}" />
+                    <TextBlock x:Name="DirtyText" Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource DpWarning}" TextWrapping="Wrap" />
+                    <Button Grid.Column="2" Content="{x:Bind local:L.T('now.revert')}" Click="Revert_Click" />
+                    <Button x:Name="SaveOrderButton" Grid.Column="3" Style="{StaticResource AccentButtonStyle}" Content="{x:Bind local:L.T('now.save_order')}" Click="SaveOrder_Click" />
+                </Grid>
+            </Border>
+
+            <TextBox x:Name="Search" Grid.Row="2" PlaceholderText="{x:Bind local:L.T('now.search')}" TextChanged="Search_TextChanged" />
+
+            <ListView
+                x:Name="Queue"
+                Grid.Row="3"
+                SelectionMode="Extended"
+                CanReorderItems="True"
+                CanDragItems="True"
+                AllowDrop="True"
+                DoubleTapped="Queue_DoubleTapped"
+                ContextRequested="Queue_ContextRequested"
+                KeyDown="Queue_KeyDown">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="svc:TrackItem">
+                        <Grid Padding="0,5" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="36" />
+                                <ColumnDefinition Width="4" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="56" />
+                            </Grid.ColumnDefinitions>
+                            <Grid>
+                                <TextBlock
+                                    Text="{x:Bind views:Ui.Number(Number), Mode=OneWay}"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource DpMuted}"
+                                    Visibility="{x:Bind views:Ui.Hidden(IsCurrent), Mode=OneWay}" />
+                                <FontIcon
+                                    Glyph="&#xE768;"
+                                    FontSize="14"
+                                    HorizontalAlignment="Right"
+                                    Foreground="{StaticResource DpAccent}"
+                                    Visibility="{x:Bind IsCurrent, Mode=OneWay}" />
+                            </Grid>
+                            <Border Grid.Column="1" CornerRadius="2" Background="{x:Bind views:Ui.ColorBrush(Track.Color), Mode=OneWay}" />
+                            <StackPanel Grid.Column="2">
+                                <TextBlock
+                                    Text="{x:Bind Track.Title, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis"
+                                    FontWeight="SemiBold"
+                                    Foreground="{x:Bind views:Ui.PlayingBrush(IsCurrent), Mode=OneWay}" />
+                                <TextBlock Text="{x:Bind Track.ArtistsLine, Mode=OneWay}" Style="{StaticResource DpMuted}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="3" Text="{x:Bind views:Ui.Dash(Track.Album), Mode=OneWay}" VerticalAlignment="Center" Style="{StaticResource DpMuted}" />
+                            <TextBlock Grid.Column="4" Text="{x:Bind Track.DurationText, Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+    </Border>
+</UserControl>

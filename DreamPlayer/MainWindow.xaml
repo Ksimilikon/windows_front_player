@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="DreamPlayer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- the shell is created in code: a language switch rebuilds it -->
+    <Grid x:Name="Host" Background="{StaticResource DpBg}" />
+</Window>

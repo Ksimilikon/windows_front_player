@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NEW / EDIT PLAYLIST: name and cover on top, the playlist being assembled
+     on the left (drag-n-drop order), the song pool on the right. -->
+<UserControl
+    x:Class="DreamPlayer.Views.PlaylistEditorPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DreamPlayer"
+    xmlns:views="using:DreamPlayer.Views"
+    xmlns:core="using:DreamPlayer.Core">
+
+    <Grid Padding="12" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Style="{StaticResource DpPane}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="NameBox" Header="{x:Bind local:L.T('editor.name')}" TextChanged="NameBox_TextChanged" />
+                <Grid Grid.Column="1" ColumnSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="CoverBox" Header="{x:Bind local:L.T('editor.cover')}" PlaceholderText="{x:Bind local:L.T('editor.cover_none')}" />
+                    <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14" />
+                    </Button>
+                    <Button Grid.Column="2" VerticalAlignment="Bottom" Click="ClearCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}">
+                        <FontIcon Glyph="&#xE711;" FontSize="14" />
+                    </Button>
+                </Grid>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                    <Button Content="{x:Bind local:L.T('common.cancel')}" Click="Cancel_Click" />
+                    <Button x:Name="SaveButton" Style="{StaticResource AccentButtonStyle}" Click="Save_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                            <TextBlock Text="{x:Bind local:L.T('common.save')}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- assembled playlist -->
+            <Border Style="{StaticResource DpPane}">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TextBlock x:Name="AssembledTitle" Style="{StaticResource DpPaneTitle}" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                            <Button Style="{StaticResource DpIconButton}" Click="RemoveSelected_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.remove_selected')}">
+                                <FontIcon Glyph="&#xE738;" FontSize="14" />
+                            </Button>
+                            <Button Style="{StaticResource DpIconButton}" Click="SortAssembled_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.sort_assembled')}">
+                                <FontIcon Glyph="&#xE8CB;" FontSize="14" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <TextBox x:Name="AssembledSearch" Grid.Row="1" PlaceholderText="{x:Bind local:L.T('common.search_tracks')}" TextChanged="AssembledSearch_TextChanged" />
+                    <ListView
+                        x:Name="AssembledList"
+                        Grid.Row="2"
+                        SelectionMode="Extended"
+                        CanReorderItems="True"
+                        CanDragItems="True"
+                        AllowDrop="True"
+                        DoubleTapped="AssembledList_DoubleTapped"
+                        KeyDown="AssembledList_KeyDown">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="core:Track">
+                                <Grid Padding="0,5" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="4" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="56" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border CornerRadius="2" Background="{x:Bind views:Ui.ColorBrush(Color)}" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Invalid)}" />
+                                        <TextBlock Text="{x:Bind ArtistsLine}" Style="{StaticResource DpMuted}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="{x:Bind DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <!-- the pool -->
+            <Border Grid.Column="1" Style="{StaticResource DpPane}">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <TextBlock x:Name="PoolTitle" Style="{StaticResource DpPaneTitle}" />
+                        <Button HorizontalAlignment="Right" Style="{StaticResource AccentButtonStyle}" Click="AddSelected_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE710;" FontSize="12" />
+                                <TextBlock Text="{x:Bind local:L.T('editor.add_selected')}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="PoolSearch" PlaceholderText="{x:Bind local:L.T('common.search_tracks')}" TextChanged="PoolSearch_TextChanged" />
+                        <ComboBox x:Name="SortBox" Grid.Column="1" MinWidth="130" SelectionChanged="SortBox_SelectionChanged" />
+                        <ToggleButton x:Name="SortDesc" Grid.Column="2" Style="{StaticResource DpIconToggle}" Click="PoolOption_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort_desc')}">
+                            <FontIcon Glyph="&#xE8CB;" FontSize="14" />
+                        </ToggleButton>
+                        <ToggleButton x:Name="HideAdded" Grid.Column="3" Style="{StaticResource DpIconToggle}" IsChecked="True" Click="PoolOption_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.hide_added')}">
+                            <FontIcon Glyph="&#xE7B3;" FontSize="14" />
+                        </ToggleButton>
+                    </Grid>
+                    <ListView
+                        x:Name="PoolList"
+                        Grid.Row="2"
+                        SelectionMode="Extended"
+                        DoubleTapped="PoolList_DoubleTapped"
+                        KeyDown="PoolList_KeyDown">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="views:PoolRow">
+                                <Grid Padding="0,5" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="56" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="{StaticResource DpAccent}" Visibility="{x:Bind IsAdded, Mode=OneWay}" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{x:Bind Track.Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Track.Invalid)}" />
+                                        <TextBlock Text="{x:Bind Track.ArtistsLine}" Style="{StaticResource DpMuted}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="{x:Bind Track.DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

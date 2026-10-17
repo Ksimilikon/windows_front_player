@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WinUI 3 desktop app (unpackaged, Windows App SDK self-contained).
+    The player core is a native library from ../../rs_dream_player: build it
+    first, it is copied next to the exe (see "core library" below).
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <RootNamespace>DreamPlayer</RootNamespace>
+    <AssemblyName>DreamPlayer</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- [ObservableProperty] on partial properties -->
+    <LangVersion>preview</LangVersion>
+    <!-- lets `dotnet restore` work on Linux too (the app itself runs on Windows only) -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <!--
+    core library: dream_player.dll. Looked up in this order (override with
+    -p:CoreDll=path\to\dream_player.dll):
+      1. native MSVC build:   rs_dream_player\target\release
+      2. cross build (Linux): rs_dream_player\target\x86_64-pc-windows-gnu\release
+  -->
+  <PropertyGroup>
+    <CoreRepo>$(MSBuildThisFileDirectory)..\..\rs_dream_player\target</CoreRepo>
+    <CoreDll Condition="'$(CoreDll)' == '' and Exists('$(CoreRepo)\release\dream_player.dll')">$(CoreRepo)\release\dream_player.dll</CoreDll>
+    <CoreDll Condition="'$(CoreDll)' == '' and Exists('$(CoreRepo)\x86_64-pc-windows-gnu\release\dream_player.dll')">$(CoreRepo)\x86_64-pc-windows-gnu\release\dream_player.dll</CoreDll>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(CoreDll)' != ''">
+    <None Include="$(CoreDll)" Link="dream_player.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+  <Target Name="WarnNoCore" BeforeTargets="Build" Condition="'$(CoreDll)' == ''">
+    <Warning Text="dream_player.dll not found: build rs_dream_player (cargo build --release) or pass -p:CoreDll=..." />
+  </Target>
+
+</Project>
