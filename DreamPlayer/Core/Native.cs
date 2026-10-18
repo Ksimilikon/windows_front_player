@@ -51,6 +51,17 @@ public enum IdxStatus : uint
     WriteFailed = 7,
     IndexFailed = 8,
     Panic = 9,
+    InvalidArgument = 10,
+}
+
+/// which songs in no playlist `idx_get_orphan_tracks` lists.
+public enum OrphanFilter : uint
+{
+    /// not marked "ignore orphanhood" (the collector's default).
+    NotIgnored = 0,
+    /// only the marked ones.
+    Ignored = 1,
+    All = 2,
 }
 
 public enum CdcStatus : uint
@@ -91,6 +102,86 @@ public enum ImportFileKind : uint
     Cover = 2,
 }
 
+public enum ConStatus : uint
+{
+    Ok = 0,
+    NotInitialized = 1,
+    NullPointer = 2,
+    InvalidUtf8 = 3,
+    InvalidArgument = 4,
+    NoDatabase = 5,
+    KeysFailed = 6,
+    UnknownDevice = 7,
+    UnknownPairedDevice = 8,
+    WrongState = 9,
+    Busy = 10,
+    DbFailed = 11,
+    Panic = 12,
+    InvalidPacket = 13,
+    WeakKey = 14,
+    DecryptFailed = 15,
+    TooLong = 16,
+}
+
+public enum SyncStatus : uint
+{
+    Ok = 0,
+    NotInitialized = 1,
+    NullPointer = 2,
+    InvalidArgument = 3,
+    NoDatabase = 4,
+    KeysFailed = 5,
+    UnknownDevice = 6,
+    WrongState = 7,
+    InvalidUtf8 = 8,
+    Panic = 9,
+    NotFound = 10,
+    DbFailed = 11,
+}
+
+public enum SyncEventKind : uint
+{
+    None = 0,
+    /// keys are exchanged (`PairedId`).
+    Paired = 1,
+    /// files to write: `sync_import_files` -> `sync_import_done`.
+    Import = 2,
+    /// the peer accepted a data portion (`Songs`, `Playlists`).
+    Sent = 3,
+    /// a received data portion is saved (`Songs`, `Playlists`).
+    Received = 4,
+    /// the peer didn't accept a portion (`Status`); the session goes on.
+    PeerRejected = 5,
+    Done = 6,
+    /// the session is over with an error (`Status`, `ByPeer`).
+    Failed = 7,
+}
+
+/// protocol status of `Ack` / `Abort` (`frame::WireStatus`), carried by
+/// sync events.
+public enum WireStatus : uint
+{
+    Ok = 0,
+    InvalidPacket = 1,
+    Unexpected = 2,
+    DecryptFailed = 3,
+    PairFailed = 4,
+    Rejected = 5,
+    WriteFailed = 6,
+    Busy = 7,
+    Cancelled = 8,
+    Internal = 9,
+    ModeMismatch = 10,
+}
+
+/// what `sync_new_send` sends.
+internal enum SyncWhat : uint
+{
+    Library = 0,
+    Playlists = 1,
+    Tracks = 2,
+}
+
 // ───────────────────────────── structs ─────────────────────────────
 // Rust `bool` is one byte: kept as `byte` so the structs stay blittable.
 
@@ -126,6 +217,8 @@ internal struct FFITrackMetadata
     public byte Invalid;
     public nint Color;     // maybe null
     public nint UserLabel; // maybe null
+    /// kept on purpose though in no playlist (the orphan collector skips it).
+    public byte IgnoreOrphan;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -173,6 +266,52 @@ internal struct FFIImportFile
 
 [StructLayout(LayoutKind.Sequential)]
 internal struct FFIImportFiles
+{
+    public nint Ptr;
+    public nuint Len;
+}
+
+/// a device this one has paired with (from the db).
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct FFIConPaired
+{
+    public long Id;
+    public fixed byte PubKey[32];
+    public nint Name;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct FFIConPairedList
+{
+    public nint Ptr;
+    public nuint Len;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct FFISyncEvent
+{
+    public SyncEventKind Kind;
+    public WireStatus Status;
+    public byte ByPeer;
+    public long PairedId;
+    public uint Songs;
+    public uint Playlists;
+}
+
+/// one file of a received data portion (owned by the session).
+[StructLayout(LayoutKind.Sequential)]
+internal struct FFISyncFile
+{
+    public ImportFileKind Kind;
+    public nint Name;
+    public nint Data;
+    public nuint DataLen;
+    /// a local file to write over; null — write anywhere.
+    public nint Replace;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct FFISyncFiles
 {
     public nint Ptr;
     public nuint Len;
@@ -266,6 +405,12 @@ internal static unsafe partial class Native
 
     [LibraryImport(Lib, EntryPoint = "idx_get_tracks")]
     internal static partial IdxStatus IdxGetTracks(out FFITracksList list);
+
+    [LibraryImport(Lib, EntryPoint = "idx_get_orphan_tracks")]
+    internal static partial IdxStatus IdxGetOrphanTracks(OrphanFilter filter, out FFITracksList list);
+
+    [LibraryImport(Lib, EntryPoint = "idx_set_track_ignore_orphan")]
+    internal static partial IdxStatus IdxSetTrackIgnoreOrphan(long id, [MarshalAs(UnmanagedType.U1)] bool ignore);
 
     [LibraryImport(Lib, EntryPoint = "idx_get_track", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial IdxStatus IdxGetTrack(long id, string? path, out FFITrackMetadata meta);
@@ -370,6 +515,85 @@ internal static unsafe partial class Native
 
     [LibraryImport(Lib, EntryPoint = "cdc_import_cancel")]
     internal static partial void CdcImportCancel(nint session);
+
+    // ── device pairing (con) ──
+
+    [LibraryImport(Lib, EntryPoint = "con_get_pub_key")]
+    internal static partial ConStatus ConGetPubKey(byte* key32);
+
+    [LibraryImport(Lib, EntryPoint = "con_add")]
+    internal static partial ConStatus ConAdd(out ulong id);
+
+    [LibraryImport(Lib, EntryPoint = "con_remove")]
+    internal static partial ConStatus ConRemove(ulong id);
+
+    [LibraryImport(Lib, EntryPoint = "con_connect")]
+    internal static partial ConStatus ConConnect(ulong id);
+
+    [LibraryImport(Lib, EntryPoint = "con_disconnect")]
+    internal static partial ConStatus ConDisconnect(ulong id);
+
+    [LibraryImport(Lib, EntryPoint = "con_get_paired")]
+    internal static partial ConStatus ConGetPaired(out FFIConPairedList list);
+
+    [LibraryImport(Lib, EntryPoint = "con_free_paired_list")]
+    internal static partial void ConFreePairedList(FFIConPairedList list);
+
+    [LibraryImport(Lib, EntryPoint = "con_rename", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial ConStatus ConRename(long pairedId, string name);
+
+    [LibraryImport(Lib, EntryPoint = "con_forget")]
+    internal static partial ConStatus ConForget(long pairedId);
+
+    // ── library sync (sync) ──
+
+    [LibraryImport(Lib, EntryPoint = "sync_new")]
+    internal static partial SyncStatus SyncNew(ulong con, [MarshalAs(UnmanagedType.U1)] bool host, out nint session);
+
+    [LibraryImport(Lib, EntryPoint = "sync_new_send")]
+    internal static partial SyncStatus SyncNewSend(ulong con,
+        [MarshalAs(UnmanagedType.U1)] bool host,
+        SyncWhat what,
+        nint* names, nuint namesLen,
+        long* ids, nuint idsLen,
+        [MarshalAs(UnmanagedType.U1)] bool withAudio,
+        [MarshalAs(UnmanagedType.U1)] bool withNames,
+        [MarshalAs(UnmanagedType.U1)] bool withCovers,
+        out nint session);
+
+    [LibraryImport(Lib, EntryPoint = "sync_new_receive")]
+    internal static partial SyncStatus SyncNewReceive(ulong con,
+        [MarshalAs(UnmanagedType.U1)] bool host,
+        [MarshalAs(UnmanagedType.U1)] bool force,
+        out nint session);
+
+    [LibraryImport(Lib, EntryPoint = "sync_free")]
+    internal static partial void SyncFree(nint session);
+
+    [LibraryImport(Lib, EntryPoint = "sync_feed")]
+    internal static partial SyncStatus SyncFeed(nint session, byte* data, nuint len);
+
+    [LibraryImport(Lib, EntryPoint = "sync_take_output")]
+    internal static partial SyncStatus SyncTakeOutput(nint session, out nint ptr, out nuint len);
+
+    [LibraryImport(Lib, EntryPoint = "sync_free_bytes")]
+    internal static partial void SyncFreeBytes(nint ptr, nuint len);
+
+    [LibraryImport(Lib, EntryPoint = "sync_poll_event")]
+    internal static partial SyncStatus SyncPollEvent(nint session, out FFISyncEvent ev);
+
+    [LibraryImport(Lib, EntryPoint = "sync_finished")]
+    [return: MarshalAs(UnmanagedType.U1)]
+    internal static partial bool SyncFinished(nint session);
+
+    [LibraryImport(Lib, EntryPoint = "sync_import_files")]
+    internal static partial SyncStatus SyncImportFiles(nint session, out FFISyncFiles files);
+
+    [LibraryImport(Lib, EntryPoint = "sync_import_done")]
+    internal static partial SyncStatus SyncImportDone(nint session, nint* paths, nuint pathsLen);
+
+    [LibraryImport(Lib, EntryPoint = "sync_cancel")]
+    internal static partial SyncStatus SyncCancel(nint session);
 
     // ── helpers ──
 

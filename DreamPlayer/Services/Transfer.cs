@@ -116,7 +116,9 @@ public static class Transfer
             {
                 try
                 {
-                    var path = WriteUnique(saveTo, f);
+                    string path;
+                    using (var data = f.OpenRead())
+                        path = WriteUnique(saveTo, f.Name, data);
                     written.Add(path);
                     CoreLog.Debug("import", $"wrote {f.Kind} {Format.Size(f.Length)} → {path}");
                 }
@@ -148,14 +150,14 @@ public static class Transfer
 
     /// writes the file into `dir` without overwriting: if the name is taken —
     /// `name (1).ext`, `name (2).ext`, ...
-    private static string WriteUnique(string dir, CoreApi.ImportFile f)
+    public static string WriteUnique(string dir, string name, Stream data)
     {
         Directory.CreateDirectory(dir);
-        var stem = Path.GetFileNameWithoutExtension(f.Name);
-        var ext = Path.GetExtension(f.Name);
+        var stem = Path.GetFileNameWithoutExtension(name);
+        var ext = Path.GetExtension(name);
         for (var n = 0; n < 10_000; n++)
         {
-            var path = Path.Combine(dir, n == 0 ? f.Name : $"{stem} ({n}){ext}");
+            var path = Path.Combine(dir, n == 0 ? name : $"{stem} ({n}){ext}");
             FileStream file;
             try
             {
@@ -168,7 +170,6 @@ public static class Transfer
             try
             {
                 using (file)
-                using (var data = f.OpenRead())
                     data.CopyTo(file);
             }
             catch
@@ -178,7 +179,7 @@ public static class Transfer
             }
             return path;
         }
-        throw new IOException($"no free name for {f.Name} in {dir}");
+        throw new IOException($"no free name for {name} in {dir}");
     }
 
     private static void RemoveAll(IEnumerable<string> paths)

@@ -87,6 +87,24 @@ public static class Ui
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
+    /// asks for a line of text; `null` — cancelled.
+    public static async Task<string?> PromptAsync(XamlRoot root, string title, string header, string text)
+    {
+        var box = new TextBox { Header = header, Text = text };
+        box.SelectAll();
+        var dialog = new ContentDialog
+        {
+            XamlRoot = root,
+            Title = title,
+            Content = box,
+            PrimaryButtonText = L.T("common.save"),
+            CloseButtonText = L.T("common.cancel"),
+            DefaultButton = ContentDialogButton.Primary,
+            RequestedTheme = ElementTheme.Dark,
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary ? box.Text : null;
+    }
+
     public static async Task ShowTextAsync(XamlRoot root, string title, string text)
     {
         var dialog = new ContentDialog
@@ -204,6 +222,25 @@ public static class Ui
         var picker = Bind(new FileSavePicker { SuggestedFileName = Path.GetFileNameWithoutExtension(suggestedName) });
         picker.FileTypeChoices.Add(typeLabel, [extension]);
         return (await picker.PickSaveFileAsync())?.Path;
+    }
+
+    /// asks where and saves log entries as a text file (the logs live only in
+    /// memory otherwise).
+    public static async Task SaveLogAsync(IEnumerable<LogEntry> entries, string name)
+    {
+        var rows = entries.ToList();
+        var path = await PickSaveFileAsync($"{name}_{DateTime.Now:yyyyMMdd_HHmmss}.log", L.T("log.file_type"), ".log");
+        if (path is null)
+            return;
+        try
+        {
+            CoreLog.Save(path, rows);
+            ShellView.Current?.Notify(L.F("log.saved", rows.Count, path), LogLevel.Ok);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            ShellView.Current?.Notify(L.F("log.save_failed", e.Message), LogLevel.Error);
+        }
     }
 
     public static string[] ImageTypes => [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"];

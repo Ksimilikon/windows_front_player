@@ -41,6 +41,9 @@
                             <MenuFlyoutItem Text="{x:Bind local:L.T('menu.export')}" Click="Menu_Export">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xEDE1;" /></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="{x:Bind local:L.T('menu.sync')}" Click="Menu_Sync">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE895;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem Text="{x:Bind local:L.T('menu.new_playlist')}" Click="Menu_NewPlaylist">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;" /></MenuFlyoutItem.Icon>
@@ -56,6 +59,9 @@
                             </MenuFlyoutItem>
                             <MenuFlyoutItem Text="{x:Bind local:L.T('menu.remove_invalid')}" Click="Menu_RemoveInvalid">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="{x:Bind local:L.T('menu.orphans')}" Click="Menu_Orphans">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7C4;" /></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem Text="{x:Bind local:L.T('menu.settings')}" Click="Menu_Settings">

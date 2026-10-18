@@ -28,6 +28,7 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
         CoverBox.Text = t.CoverArt ?? "";
         PathBox.Text = t.Path ?? "";
         InvalidBox.IsChecked = t.Invalid;
+        KeepBox.IsChecked = t.IgnoreOrphan;
         SyncSwatch();
         FillReadOnly();
     }
@@ -151,6 +152,10 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
         var invalid = InvalidBox.IsChecked == true;
         if (invalid != _t.Invalid)
             results.Add(CoreApi.Library.SetInvalid(id, invalid));
+
+        var keep = KeepBox.IsChecked == true;
+        if (keep != _t.IgnoreOrphan)
+            results.Add(CoreApi.Library.SetIgnoreOrphan(id, keep));
 
         var failed = results.Count(r => r != IdxStatus.Ok);
         if (results.Count == 0)

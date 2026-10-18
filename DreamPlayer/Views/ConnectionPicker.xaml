@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- How to reach the other device: the transport and its parameters (shared by
+     the SYNC, EXPORT "send" and IMPORT "receive" sections). -->
+<UserControl
+    x:Class="DreamPlayer.Views.ConnectionPicker"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DreamPlayer">
+
+    <StackPanel Spacing="10">
+        <ComboBox
+            x:Name="KindBox"
+            Header="{x:Bind local:L.T('conn.transport')}"
+            HorizontalAlignment="Stretch"
+            SelectionChanged="KindBox_SelectionChanged" />
+        <TextBlock
+            x:Name="KindHint"
+            Style="{StaticResource DpMuted}"
+            TextWrapping="Wrap"
+            TextTrimming="None"
+            IsTextSelectionEnabled="True" />
+
+        <TextBox
+            x:Name="AddressBox"
+            Header="{x:Bind local:L.T('conn.address')}"
+            PlaceholderText="192.168.1.5:47800" />
+        <NumberBox
+            x:Name="PortBox"
+            Header="{x:Bind local:L.T('conn.port')}"
+            Minimum="1"
+            Maximum="65535"
+            SpinButtonPlacementMode="Hidden"
+            ValueChanged="PortBox_ValueChanged" />
+        <Grid x:Name="UsbPanel" ColumnSpacing="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox
+                x:Name="UsbBox"
+                Header="{x:Bind local:L.T('conn.usb_device')}"
+                HorizontalAlignment="Stretch" />
+            <Button
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Click="UsbRefresh_Click"
+                ToolTipService.ToolTip="{x:Bind local:L.T('conn.usb_refresh')}"
+                AutomationProperties.Name="{x:Bind local:L.T('conn.usb_refresh')}">
+                <FontIcon Glyph="&#xE72C;" FontSize="14" />
+            </Button>
+        </Grid>
+
+        <Grid x:Name="BtPanel" ColumnSpacing="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox
+                x:Name="BtBox"
+                Header="{x:Bind local:L.T('conn.bt_device')}"
+                PlaceholderText="{x:Bind local:L.T('conn.bt_placeholder')}"
+                IsEditable="True"
+                HorizontalAlignment="Stretch" />
+            <Button
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Click="BtRefresh_Click"
+                ToolTipService.ToolTip="{x:Bind local:L.T('conn.bt_refresh')}"
+                AutomationProperties.Name="{x:Bind local:L.T('conn.bt_refresh')}">
+                <FontIcon Glyph="&#xE72C;" FontSize="14" />
+            </Button>
+        </Grid>
+    </StackPanel>
+</UserControl>

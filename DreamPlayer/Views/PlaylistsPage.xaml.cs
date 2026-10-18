@@ -186,6 +186,20 @@ public sealed partial class PlaylistsPage : UserControl, ITabPage
         }
     }
 
+    /// the orphan collector mark ("keep though in no playlist").
+    private static void SetKeep(IReadOnlyList<Track> tracks, bool keep)
+    {
+        var ids = tracks.Select(t => t.Id).OfType<long>().ToList();
+        var failed = ids.Count(id => CoreApi.Library.SetIgnoreOrphan(id, keep) != IdxStatus.Ok);
+        ShellView.Current?.ReloadLibrary();
+        if (failed > 0)
+            ShellView.Current?.Notify(L.F("msg.keep_failed", failed), LogLevel.Error);
+        else if (ids.Count == 1)
+            ShellView.Current?.Notify(L.F(keep ? "msg.kept_one" : "msg.unkept_one", tracks[0].Title), LogLevel.Ok);
+        else if (ids.Count > 1)
+            ShellView.Current?.Notify(L.F(keep ? "msg.kept_many" : "msg.unkept_many", ids.Count), LogLevel.Ok);
+    }
+
     private List<Track> SelectedTracks() => TrackList.SelectedItems.OfType<Track>().ToList();
 
     // ───────────────────────── events ─────────────────────────
@@ -277,7 +291,8 @@ public sealed partial class PlaylistsPage : UserControl, ITabPage
             TrackList.SelectedItem = t;
         var selected = SelectedTracks();
         var many = selected.Count > 1;
-        Ui.ShowMenu(Ui.Menu(
+        var items = new List<Ui.Item?>
+        {
             new(L.T("track.play_from_here"), "", () => Play(pl, t)),
             new(L.T("track.open_song"), "", () => ShellView.Current?.OpenSong(t)),
             new(L.T("track.edit_meta"), "", () => ShellView.Current?.OpenTrackEditor(t), !many && t.Id is not null),
@@ -287,6 +302,18 @@ public sealed partial class PlaylistsPage : UserControl, ITabPage
             new(many ? L.F("track.remove_from_playlist_n", selected.Count) : L.T("track.remove_from_playlist"),
                 "", () => RemoveFromPlaylist(pl, selected), !pl.IsPool, Destructive: true),
             new(many ? L.F("track.remove_from_library_n", selected.Count) : L.T("track.remove_from_library"),
-                "", () => RemoveFromLibrary(selected), Destructive: true)), TrackList, e);
+                "", () => RemoveFromLibrary(selected), Destructive: true),
+        };
+        // the pool is the whole library: there a song can also go from the device.
+        if (pl.IsPool)
+        {
+            var kept = selected.All(x => x.IgnoreOrphan);
+            items.Add(null);
+            items.Add(new(L.T(kept ? "orphans.unkeep" : "orphans.keep"), kept ? "" : "",
+                () => SetKeep(selected, !kept), selected.Any(x => x.Id is not null)));
+            items.Add(new(many ? L.F("track.delete_from_device_n", selected.Count) : L.T("track.delete_from_device"),
+                "", () => _ = ShellView.Current?.DeleteFromDeviceAsync(selected), Destructive: true));
+        }
+        Ui.ShowMenu(Ui.Menu([.. items]), TrackList, e);
     }
 }

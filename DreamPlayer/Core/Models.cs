@@ -25,6 +25,8 @@ public sealed record Track
     /// user color label, `#RRGGBB` when set by this frontend.
     public string? Color { get; init; }
     public string? Label { get; init; }
+    /// kept on purpose though in no playlist: the orphan collector skips it.
+    public bool IgnoreOrphan { get; init; }
 
     public string ArtistsLine => string.Join(", ", Artists);
     public string GenresLine => string.Join(", ", Genres);
@@ -56,6 +58,7 @@ public sealed record Track
             Invalid = m.Invalid != 0,
             Color = Native.Str(m.Color),
             Label = Native.Str(m.UserLabel),
+            IgnoreOrphan = m.IgnoreOrphan != 0,
         };
     }
 }
@@ -82,6 +85,23 @@ public sealed record PlaylistInfo(
     }
 }
 
+/// a device this one has paired with (a copy of `FFIConPaired`).
+public sealed record PairedDevice(long Id, byte[] Key, string Name)
+{
+    public string Fingerprint => Format.Fingerprint(Key);
+    public string IdText => $"#{Id}";
+
+    public override string ToString() => $"#{Id} {Name} [{Fingerprint}]";
+
+    internal static unsafe PairedDevice FromFfi(in FFIConPaired p)
+    {
+        var key = new byte[32];
+        fixed (byte* src = p.PubKey)
+            new ReadOnlySpan<byte>(src, 32).CopyTo(key);
+        return new PairedDevice(p.Id, key, Native.Str(p.Name) ?? "");
+    }
+}
+
 /// what goes into an export packet.
 public readonly record struct PackFlags(bool Audio, bool Names, bool Covers);
 
@@ -100,6 +120,17 @@ public static class Format
         < 1024L * 1024 * 1024 => $"{n / (1024.0 * 1024):0.0} MiB",
         _ => $"{n / (1024.0 * 1024 * 1024):0.00} GiB",
     };
+
+    /// short fingerprint of a public key for the user: `ab12 cd34 ef56 7890`.
+    public static string Fingerprint(ReadOnlySpan<byte> key)
+    {
+        if (key.Length < 8)
+            return "?";
+        var parts = new string[4];
+        for (var i = 0; i < 4; i++)
+            parts[i] = $"{key[2 * i]:x2}{key[2 * i + 1]:x2}";
+        return string.Join(" ", parts);
+    }
 
     public static string UnixDate(ulong? secs) => secs is { } s
         ? DateTimeOffset.FromUnixTimeSeconds((long)s).LocalDateTime.ToString("g")

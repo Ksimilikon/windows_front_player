@@ -72,7 +72,6 @@ public sealed partial class SettingsPage : UserControl, ITabPage
             ("settings.core_lib", File.Exists(core) ? core : "—"),
             ("settings.data_dir", App.DataDir),
             ("settings.config_dir", App.ConfigDir),
-            ("settings.log_file", CoreLog.FilePath ?? "—"),
             ("settings.panics", CoreApi.PanicCount.ToString()),
         };
         for (var i = 0; i < rows.Length; i++)
@@ -188,5 +187,4 @@ public sealed partial class SettingsPage : UserControl, ITabPage
     }
 
     private void OpenLog_Click(object sender, RoutedEventArgs e) => ShellView.Current?.OpenLog();
-    private void OpenLogDir_Click(object sender, RoutedEventArgs e) => Ui.OpenPath(App.LogDir);
 }

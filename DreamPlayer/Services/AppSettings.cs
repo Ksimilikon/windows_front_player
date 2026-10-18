@@ -33,6 +33,14 @@ public sealed class AppSettings
     public bool ExportNames { get; set; } = true;
     public bool ExportCovers { get; set; } = true;
 
+    // last used device connection (sync / send / receive)
+    public Sync.TransportKind SyncTransport { get; set; } = Sync.TransportKind.TcpListen;
+    public int SyncPort { get; set; } = Sync.Transports.DefaultPort;
+    public string SyncAddress { get; set; } = "";
+    public string? SyncBtDevice { get; set; }
+    /// `VID:PID` of the phone for USB (empty — found automatically).
+    public string SyncUsbDevice { get; set; } = "";
+
     // ───────────────────────── storage ─────────────────────────
 
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };

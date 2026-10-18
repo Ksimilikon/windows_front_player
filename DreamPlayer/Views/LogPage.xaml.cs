@@ -105,11 +105,9 @@ public sealed partial class LogPage : UserControl, ITabPage
         ShellView.Current?.Notify(L.T("log.copied"), LogLevel.Ok);
     }
 
-    private void OpenFile_Click(object sender, RoutedEventArgs e)
-    {
-        if (CoreLog.FilePath is { } path)
-            Ui.OpenPath(path);
-    }
+    /// selected rows, or every shown one.
+    private async void Save_Click(object sender, RoutedEventArgs e) =>
+        await Ui.SaveLogAsync(Entries.SelectedItems.Count > 0 ? Entries.SelectedItems.OfType<LogEntry>() : _visible, "dream_player");
 
     private void Clear_Click(object sender, RoutedEventArgs e) => CoreLog.Clear();
 

@@ -40,6 +40,28 @@ public sealed class Library
 
     public Track? TrackById(long id) => Pool.FirstOrDefault(t => t.Id == id);
 
+    /// deletes a song from the device: its file (already gone is fine), then
+    /// its library row. `null` — done, otherwise what failed.
+    public static string? DeleteFromDevice(Track t)
+    {
+        if (t.Path is { } path)
+        {
+            try
+            {
+                File.Delete(path);
+                CoreLog.Info("lib", $"deleted file {path}");
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                CoreLog.Warn("lib", $"failed to delete {path}: {e.Message}");
+                return $"{path}: {e.Message}";
+            }
+        }
+        if (t.Id is { } id && CoreApi.Library.Remove(id) is var st && st != IdxStatus.Ok)
+            return L.F("msg.row_kept", t.Title, CoreApi.Describe(st));
+        return null;
+    }
+
     /// re-reads the pool and playlists from the core. `false` — the core
     /// failed (the previous state is kept).
     public bool Reload()

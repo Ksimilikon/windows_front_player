@@ -1,9 +1,12 @@
 // EXPORT tab: what (library / playlists / tracks), flags, the selection list
 // (checkboxes, search keeps the marks), the target file from a save dialog.
+// The same selection and flags can be sent straight to another device
+// instead (it receives on its import tab).
 
 using System.Collections.ObjectModel;
 using DreamPlayer.Core;
 using DreamPlayer.Services;
+using DreamPlayer.Services.Sync;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -22,6 +25,8 @@ public sealed partial class ExportPage : UserControl, ITabPage
     private readonly HashSet<ExportItem> _checked = [];
     private List<ExportItem> _all = [];
     private bool _syncing;
+    /// a running send to another device.
+    private SyncWorker? _worker;
 
     public ExportPage()
     {
@@ -38,7 +43,11 @@ public sealed partial class ExportPage : UserControl, ITabPage
         Report(L.T("export.ready"), LogLevel.Info);
     }
 
-    public void OnClosed() => Library.Instance.Changed -= Rebuild;
+    public void OnClosed()
+    {
+        Library.Instance.Changed -= Rebuild;
+        _worker?.Cancel();
+    }
 
     private ExportMode Mode => (ExportMode)Math.Max(0, ModeBox.SelectedIndex);
 
@@ -118,7 +127,9 @@ public sealed partial class ExportPage : UserControl, ITabPage
             ? L.T("export.mode_library")
             : L.F("export.selected", _checked.Count, _all.Count);
 
-    private async Task RunAsync()
+    /// the marked selection and the flags (saved as the defaults); `null` —
+    /// nothing marked (reported).
+    private (ExportMode Mode, List<string> Names, List<long> Ids, PackFlags Flags)? Picked()
     {
         var mode = Mode;
         var names = _all.Where(_checked.Contains).Select(i => i.Playlist).OfType<string>().ToList();
@@ -126,17 +137,64 @@ public sealed partial class ExportPage : UserControl, ITabPage
         if (mode != ExportMode.Library && names.Count + ids.Count == 0)
         {
             Report(L.T("export.nothing_selected"), LogLevel.Warn);
-            return;
+            return null;
         }
-        var target = await Ui.PickSaveFileAsync(Transfer.DefaultFileName(), L.T("export.file_type"), Transfer.Extension);
-        if (target is null)
-            return;
-
+        // no playlists — no covers (the switch is disabled then).
         var flags = new PackFlags(AudioSwitch.IsOn, NamesSwitch.IsOn, CoversSwitch.IsOn && mode != ExportMode.Tracks);
         AppSettings.Current.ExportAudio = AudioSwitch.IsOn;
         AppSettings.Current.ExportNames = NamesSwitch.IsOn;
         AppSettings.Current.ExportCovers = CoversSwitch.IsOn;
         AppSettings.Save();
+        return (mode, names, ids, flags);
+    }
+
+    /// sends the selection to another device (it receives on its import tab).
+    private async Task SendAsync()
+    {
+        if (Picked() is not var (mode, names, ids, flags))
+            return;
+        if (Connection.Target(out var error) is not { } target)
+        {
+            Report(error ?? "", LogLevel.Warn);
+            return;
+        }
+        var what = mode switch
+        {
+            ExportMode.Library => L.T("export.what_library"),
+            ExportMode.Playlists => L.F("export.what_playlists", names.Count),
+            _ => L.F("export.what_tracks", ids.Count),
+        };
+        Report(L.F("export.sending", what, flags.Audio, flags.Names, flags.Covers), LogLevel.Info);
+        var worker = SyncWorker.Start(target, new SyncMode.Send(mode, names, ids, flags), AppSettings.Current.MusicDir, Report);
+        if (worker is null)
+            return;
+        _worker = worker;
+        SetSending(true);
+        try
+        {
+            await ShellView.Current!.FinishSyncAsync(worker);
+        }
+        finally
+        {
+            SetSending(false);
+        }
+    }
+
+    private void SetSending(bool running)
+    {
+        SendButton.IsEnabled = !running && CoreApi.Initialized;
+        CancelSendButton.IsEnabled = running;
+        Connection.IsEnabled = !running;
+        SendProgress.IsActive = running;
+    }
+
+    private async Task RunAsync()
+    {
+        if (Picked() is not var (mode, names, ids, flags))
+            return;
+        var target = await Ui.PickSaveFileAsync(Transfer.DefaultFileName(), L.T("export.file_type"), Transfer.Extension);
+        if (target is null)
+            return;
 
         RunButton.IsEnabled = false;
         Progress.IsActive = true;
@@ -185,4 +243,7 @@ public sealed partial class ExportPage : UserControl, ITabPage
     }
 
     private async void Run_Click(object sender, RoutedEventArgs e) => await RunAsync();
+    private async void Send_Click(object sender, RoutedEventArgs e) => await SendAsync();
+    private void CancelSend_Click(object sender, RoutedEventArgs e) => _worker?.Cancel();
+    private async void SaveLog_Click(object sender, RoutedEventArgs e) => await Ui.SaveLogAsync(_messages, "dream_player_export");
 }

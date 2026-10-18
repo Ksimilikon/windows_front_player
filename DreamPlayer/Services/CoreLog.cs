@@ -1,8 +1,8 @@
 // Frontend log: how the frontend talks to the core. Every FFI call made through
 // CoreApi lands here (call, arguments, status, time), plus core callbacks
 // (track end), core panics and frontend-level events (import / export steps,
-// playback decisions). Kept in memory for the log tab and appended to
-// `<LocalAppData>/DreamPlayer/logs/frontend.log`.
+// playback decisions). Kept in memory only (nothing is written to disk by
+// itself): the log tabs save it to a file on request (`Save`).
 
 using System.Collections.ObjectModel;
 using System.Text;
@@ -36,10 +36,7 @@ public sealed record LogEntry(DateTime Time, LogLevel Level, string Area, string
 public static class CoreLog
 {
     private const int MemoryLimit = 5000;
-    private const long FileLimit = 2 * 1024 * 1024;
 
-    private static readonly object FileLock = new();
-    private static string? _file;
     private static Action<Action>? _post;
 
     /// in-memory entries for the log tab; changed only on the UI thread.
@@ -49,16 +46,16 @@ public static class CoreLog
     /// several per second). Off by default.
     public static bool Verbose { get; set; }
 
-    public static string? FilePath => _file;
-
-    /// `post` runs an action on the UI thread; `dir` — where the log file goes.
-    public static void Init(Action<Action> post, string dir)
+    /// `post` runs an action on the UI thread.
+    public static void Init(Action<Action> post)
     {
         _post = post;
-        Directory.CreateDirectory(dir);
-        _file = System.IO.Path.Combine(dir, "frontend.log");
         Write(LogLevel.Info, "app", $"--- session start, pid {Environment.ProcessId} ---");
     }
+
+    /// writes `entries` to a text file (one line each, UTF-8).
+    public static void Save(string path, IEnumerable<LogEntry> entries) =>
+        File.WriteAllLines(path, entries.Select(e => e.ToString()), new UTF8Encoding(false));
 
     public static void Debug(string area, string text) => Write(LogLevel.Debug, area, text);
     public static void Info(string area, string text) => Write(LogLevel.Info, area, text);
@@ -69,7 +66,6 @@ public static class CoreLog
     public static void Write(LogLevel level, string area, string text)
     {
         var entry = new LogEntry(DateTime.Now, level, area, text);
-        AppendFile(entry);
         if (_post is { } post)
             post(() => AddEntry(entry));
         else
@@ -85,26 +81,4 @@ public static class CoreLog
             Entries.RemoveAt(0);
     }
 
-    private static void AppendFile(LogEntry entry)
-    {
-        if (_file is null)
-            return;
-        lock (FileLock)
-        {
-            try
-            {
-                var info = new FileInfo(_file);
-                if (info.Exists && info.Length > FileLimit)
-                    File.Move(_file, _file + ".1", overwrite: true);
-                File.AppendAllText(_file, entry + Environment.NewLine, Encoding.UTF8);
-            }
-            catch (IOException)
-            {
-                // the log must never break the app.
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-        }
-    }
 }

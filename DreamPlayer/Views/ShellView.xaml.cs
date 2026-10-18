@@ -5,11 +5,13 @@
 // - PLAYLISTS — permanent;
 // - NOW PLAYING — exists while a queue is loaded; closing it stops playback;
 // - SONG — closes by itself as soon as another tab is selected;
-// - editors, import, export, settings, log — opened on demand, closable.
+// - editors, import, export, devices (sync), orphans, settings, log — opened
+//   on demand, closable.
 
 using System.ComponentModel;
 using DreamPlayer.Core;
 using DreamPlayer.Services;
+using DreamPlayer.Services.Sync;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -36,6 +38,8 @@ public sealed partial class ShellView : UserControl
     public const string ExportKey = "export";
     public const string SettingsKey = "settings";
     public const string LogKey = "log";
+    public const string OrphansKey = "orphans";
+    public const string SyncKey = "sync";
 
     private static readonly TimeSpan ToastShort = TimeSpan.FromSeconds(4);
     private static readonly TimeSpan ToastLong = TimeSpan.FromSeconds(10);
@@ -228,6 +232,10 @@ public sealed partial class ShellView : UserControl
 
     public void OpenLog() => Open(LogKey, L.T("tab.log"), "", () => new LogPage());
 
+    public void OpenOrphans() => Open(OrphansKey, L.T("tab.orphans"), "", () => new OrphansPage());
+
+    public void OpenSync() => Open(SyncKey, L.T("tab.sync"), "", () => new SyncPage());
+
     // ───────────────────────── messages ─────────────────────────
 
     public void Notify(string text, LogLevel level) => Notify(text, level, sticky: false);
@@ -344,10 +352,51 @@ public sealed partial class ShellView : UserControl
             Notify(L.T("msg.remove_invalid_failed"), LogLevel.Error);
     }
 
+    /// deletes songs from the device (their files + library rows) after a
+    /// confirmation; a playing one stops first.
+    public async Task<bool> DeleteFromDeviceAsync(IReadOnlyList<Track> tracks)
+    {
+        if (tracks.Count == 0 || !RequireCore())
+            return false;
+        var text = tracks.Count == 1
+            ? L.F("confirm.delete_device_text", Ui.TrackLine(tracks[0]), tracks[0].Path ?? "—")
+            : L.F("confirm.delete_device_text_n", tracks.Count);
+        if (!await Ui.ConfirmAsync(XamlRoot, L.T("confirm.delete_device_title"), text, L.T("common.delete"), destructive: true))
+            return false;
+        var keys = tracks.Select(t => t.Key).ToHashSet();
+        if (_p.Current is { } cur && keys.Contains(cur.Track.Key))
+            _p.Stop();
+        var errors = tracks.Select(Library.DeleteFromDevice).OfType<string>().ToList();
+        foreach (var t in tracks)
+            Covers.Forget(t);
+        ReloadLibrary();
+        if (errors.Count == 0)
+            Notify(L.F("msg.deleted_from_device", tracks.Count), LogLevel.Ok);
+        else
+            Notify(L.F("msg.delete_from_device_failed", errors.Count, errors[0]), LogLevel.Error);
+        return errors.Count == 0;
+    }
+
+    /// waits for a sync / send / receive, re-reads the library if received
+    /// data was saved and reports the outcome.
+    public async Task<SyncResult> FinishSyncAsync(SyncWorker worker)
+    {
+        var result = await worker.Completion;
+        if (result.LibraryChanged)
+            ReloadLibrary();
+        if (result.Complete)
+            Notify(L.T("msg.sync_done"), LogLevel.Ok);
+        else
+            Notify(L.T("msg.sync_failed"), LogLevel.Warn);
+        return result;
+    }
+
     // ───────────────────────── menu ─────────────────────────
 
     private void Menu_Import(object sender, RoutedEventArgs e) => OpenImport();
     private void Menu_Export(object sender, RoutedEventArgs e) => OpenExport();
+    private void Menu_Sync(object sender, RoutedEventArgs e) => OpenSync();
+    private void Menu_Orphans(object sender, RoutedEventArgs e) => OpenOrphans();
     private void Menu_NewPlaylist(object sender, RoutedEventArgs e) => OpenPlaylistEditor(null);
     private async void Menu_AddFiles(object sender, RoutedEventArgs e) => await AddFilesAsync();
     private async void Menu_ScanFolder(object sender, RoutedEventArgs e) => await ScanFolderAsync();
@@ -517,6 +566,10 @@ public sealed partial class ShellView : UserControl
             };
             KeyboardAccelerators.Add(acc);
         }
+
+        // the accelerators live on the whole shell: without this WinUI shows
+        // their keys ("Ctrl+Space") as a tooltip wherever the pointer rests.
+        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
 
         const VirtualKeyModifiers ctrl = VirtualKeyModifiers.Control;
         const VirtualKeyModifiers ctrlShift = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift;

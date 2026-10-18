@@ -12,8 +12,9 @@ namespace DreamPlayer.Core;
 
 public static unsafe class CoreApi
 {
-    /// packet format version the frontend writes (`codec::Version::V0_1`).
-    public const uint PacketVersion = 1;
+    /// packet format version the frontend writes (`codec::Version::V0_11`:
+    /// a library packet also carries deleted playlists).
+    public const uint PacketVersion = 2;
 
     private static ulong _panics;
     private static int _busy;
@@ -76,7 +77,7 @@ public static unsafe class CoreApi
 
     private static LogLevel Classify<TStatus>(TStatus st) where TStatus : struct, Enum => (object)st switch
     {
-        EngineStatus.Ok or IdxStatus.Ok or CdcStatus.Ok or InitStatus.Ok => LogLevel.Ok,
+        EngineStatus.Ok or IdxStatus.Ok or CdcStatus.Ok or InitStatus.Ok or ConStatus.Ok or SyncStatus.Ok => LogLevel.Ok,
         EngineStatus.ConfigWriteFailed or IdxStatus.NotFound or CdcStatus.Outdated => LogLevel.Warn,
         _ => LogLevel.Error,
     };
@@ -242,6 +243,27 @@ public static unsafe class CoreApi
             CoreLog.Debug(A, $"idx_get_tracks: {result.Count} track(s)");
             return result;
         }
+
+        /// songs that are in no playlist (the orphan collector); `null` on
+        /// error.
+        public static List<Track>? Orphans(OrphanFilter filter)
+        {
+            FFITracksList list = default;
+            var st = Run(A, $"idx_get_orphan_tracks({filter})", () => Native.IdxGetOrphanTracks(filter, out list));
+            if (st != IdxStatus.Ok)
+                return null;
+            var result = new List<Track>((int)list.Len);
+            var items = (FFITrackMetadata*)list.Ptr;
+            for (nuint i = 0; i < list.Len; i++)
+                result.Add(Track.FromFfi(items[i]));
+            Native.IdxFreeTracksList(list);
+            CoreLog.Debug(A, $"idx_get_orphan_tracks: {result.Count} track(s)");
+            return result;
+        }
+
+        /// the mark "ignore orphanhood": the collector stops listing the song.
+        public static IdxStatus SetIgnoreOrphan(long id, bool ignore) =>
+            Run(A, $"idx_set_track_ignore_orphan({id}, {ignore})", () => Native.IdxSetTrackIgnoreOrphan(id, ignore));
 
         public static List<PlaylistInfo>? Playlists()
         {
@@ -433,6 +455,235 @@ public static unsafe class CoreApi
             if (st != CdcStatus.Ok || session == 0)
                 return (st, null);
             return (st, new ImportSession(session, files));
+        }
+    }
+
+    // ───────────────────────── device pairing (con) ─────────────────────────
+
+    public static class Con
+    {
+        private const string A = "con";
+
+        /// public key of this device (32 bytes); `null` on error.
+        public static byte[]? PubKey()
+        {
+            var key = new byte[32];
+            ConStatus st;
+            fixed (byte* p = key)
+            {
+                var ptr = p;
+                st = Run(A, "con_get_pub_key()", () => Native.ConGetPubKey(ptr));
+            }
+            return st == ConStatus.Ok ? key : null;
+        }
+
+        /// a new connection entry brought to `Connected` (the transport is up).
+        public static (ConStatus, ulong) Open()
+        {
+            ulong id = 0;
+            var st = Run(A, "con_add()", () => Native.ConAdd(out id));
+            if (st != ConStatus.Ok)
+                return (st, 0);
+            var entry = id;
+            st = Run(A, $"con_connect({entry})", () => Native.ConConnect(entry));
+            if (st != ConStatus.Ok)
+                Run(A, $"con_remove({entry})", () => Native.ConRemove(entry));
+            return (st, id);
+        }
+
+        /// drops a connection entry (the transport is down).
+        public static void Close(ulong id)
+        {
+            Run(A, $"con_disconnect({id})", () => Native.ConDisconnect(id));
+            Run(A, $"con_remove({id})", () => Native.ConRemove(id));
+        }
+
+        /// every device this one has paired with; `null` on error.
+        public static List<PairedDevice>? Paired()
+        {
+            FFIConPairedList list = default;
+            var st = Run(A, "con_get_paired()", () => Native.ConGetPaired(out list));
+            if (st != ConStatus.Ok)
+                return null;
+            var result = new List<PairedDevice>((int)list.Len);
+            var items = (FFIConPaired*)list.Ptr;
+            for (nuint i = 0; i < list.Len; i++)
+                result.Add(PairedDevice.FromFfi(items[i]));
+            Native.ConFreePairedList(list);
+            return result;
+        }
+
+        public static ConStatus Rename(long pairedId, string name) =>
+            Run(A, $"con_rename({pairedId}, {Q(name)})", () => Native.ConRename(pairedId, name));
+
+        public static ConStatus Forget(long pairedId) =>
+            Run(A, $"con_forget({pairedId})", () => Native.ConForget(pairedId));
+    }
+
+    // ───────────────────────── library sync (sync) ─────────────────────────
+
+    /// a session event (a copy of `FFISyncEvent`).
+    public readonly record struct SyncEvent(
+        SyncEventKind Kind, WireStatus Status, bool ByPeer, long PairedId, uint Songs, uint Playlists);
+
+    /// one file of a received data portion: points into the session memory.
+    public sealed class SyncFile
+    {
+        internal nint Data;
+        internal nuint DataLen;
+
+        public required ImportFileKind Kind { get; init; }
+        /// suggested OS-safe name.
+        public required string Name { get; init; }
+        /// a local song with the same name to write over (`null` — anywhere).
+        public string? Replace { get; init; }
+        public long Length => (long)DataLen;
+
+        /// a read-only view of the bytes; valid until `ImportDone` / `Cancel`.
+        public Stream OpenRead() => new UnmanagedMemoryStream((byte*)Data, (long)DataLen);
+    }
+
+    /// a sync session over one connection entry (`sync_*`): a state machine
+    /// without I/O, driven by one thread at a time (the sync worker).
+    /// Polling calls are quiet in the log.
+    public sealed class SyncSession : IDisposable
+    {
+        private const string A = "sync";
+        private nint _s;
+
+        private SyncSession(nint s) => _s = s;
+
+        private static (SyncStatus, SyncSession?) Wrap(SyncStatus st, nint s) =>
+            st == SyncStatus.Ok && s != 0 ? (st, new SyncSession(s)) : (st, null);
+
+        /// two-way library sync; `host` — this side listened.
+        public static (SyncStatus, SyncSession?) New(ulong con, bool host)
+        {
+            nint s = 0;
+            var st = Run(A, $"sync_new({con}, host={host})", () => Native.SyncNew(con, host, out s));
+            return Wrap(st, s);
+        }
+
+        /// one-way send of a selection with the export flags.
+        public static (SyncStatus, SyncSession?) NewSend(ulong con, bool host, ExportMode what,
+            IReadOnlyList<string> playlists, IReadOnlyList<long> ids, PackFlags f)
+        {
+            nint s = 0;
+            using var names = new Utf8Array(what == ExportMode.Playlists ? playlists : []);
+            var arr = what == ExportMode.Tracks ? ids.ToArray() : [];
+            var kind = (SyncWhat)what;
+            SyncStatus st;
+            fixed (long* p = arr)
+            {
+                var idsPtr = p;
+                st = Run(A, $"sync_new_send({con}, host={host}, {kind}, {names.Len} name(s), {arr.Length} id(s), audio={f.Audio}, names={f.Names}, covers={f.Covers})",
+                    () => Native.SyncNewSend(con, host, kind, names.Ptr, names.Len, idsPtr, (nuint)arr.Length,
+                        f.Audio, f.Names, f.Covers, out s));
+            }
+            return Wrap(st, s);
+        }
+
+        /// one-way receive; `force` — accept outdated playlists too.
+        public static (SyncStatus, SyncSession?) NewReceive(ulong con, bool host, bool force)
+        {
+            nint s = 0;
+            var st = Run(A, $"sync_new_receive({con}, host={host}, force={force})",
+                () => Native.SyncNewReceive(con, host, force, out s));
+            return Wrap(st, s);
+        }
+
+        private nint S => _s != 0 ? _s : throw new ObjectDisposedException(nameof(SyncSession));
+
+        /// bytes received from the peer.
+        public void Feed(ReadOnlySpan<byte> data)
+        {
+            var s = S;
+            var len = data.Length;
+            fixed (byte* p = data)
+            {
+                var ptr = p;
+                Run(A, $"sync_feed({len} B)", () => Native.SyncFeed(s, ptr, (nuint)len), quiet: true);
+            }
+        }
+
+        /// bytes to send to the peer (empty — nothing now).
+        public byte[] TakeOutput()
+        {
+            var s = S;
+            nint p = 0;
+            nuint len = 0;
+            var st = Run(A, "sync_take_output()", () => Native.SyncTakeOutput(s, out p, out len), quiet: true);
+            if (st != SyncStatus.Ok || p == 0)
+                return [];
+            var bytes = new ReadOnlySpan<byte>((void*)p, checked((int)len)).ToArray();
+            Native.SyncFreeBytes(p, len);
+            return bytes;
+        }
+
+        /// the next event (`null` — none now).
+        public SyncEvent? PollEvent()
+        {
+            var s = S;
+            FFISyncEvent ev = default;
+            var st = Run(A, "sync_poll_event()", () => Native.SyncPollEvent(s, out ev), quiet: true);
+            if (st != SyncStatus.Ok || ev.Kind == SyncEventKind.None)
+                return null;
+            CoreLog.Debug(A, $"event {ev.Kind} status={ev.Status} by_peer={ev.ByPeer != 0} paired={ev.PairedId} songs={ev.Songs} playlists={ev.Playlists}");
+            return new SyncEvent(ev.Kind, ev.Status, ev.ByPeer != 0, ev.PairedId, ev.Songs, ev.Playlists);
+        }
+
+        /// the session is over (`Done` or `Failed`).
+        public bool Finished => _s == 0 || Native.SyncFinished(_s);
+
+        /// files of the waiting import (after an `Import` event).
+        public IReadOnlyList<SyncFile> ImportFiles()
+        {
+            var s = S;
+            FFISyncFiles files = default;
+            var st = Run(A, "sync_import_files()", () => Native.SyncImportFiles(s, out files));
+            if (st != SyncStatus.Ok || files.Ptr == 0)
+                return [];
+            var list = new List<SyncFile>((int)files.Len);
+            var items = (FFISyncFile*)files.Ptr;
+            for (nuint i = 0; i < files.Len; i++)
+            {
+                list.Add(new SyncFile
+                {
+                    Kind = items[i].Kind,
+                    Name = Native.Str(items[i].Name) ?? $"file{i}",
+                    Replace = Native.Str(items[i].Replace),
+                    Data = items[i].Data,
+                    DataLen = items[i].DataLen,
+                });
+            }
+            return list;
+        }
+
+        /// the import files are written: `paths[i]` — where file `i` went
+        /// (null — not written). The portion is saved and the peer answered.
+        public SyncStatus ImportDone(IReadOnlyList<string?> paths)
+        {
+            var s = S;
+            using var arr = new Utf8Array(paths);
+            return Run(A, $"sync_import_done({paths.Count} path(s), {paths.Count(p => p is null)} skipped)",
+                () => Native.SyncImportDone(s, arr.Ptr, arr.Len));
+        }
+
+        /// breaks the session off: the `Abort` for the peer is in `TakeOutput`.
+        public void Cancel()
+        {
+            var s = S;
+            Run(A, "sync_cancel()", () => Native.SyncCancel(s));
+        }
+
+        public void Dispose()
+        {
+            if (_s == 0)
+                return;
+            var s = _s;
+            _s = 0;
+            Native.SyncFree(s);
+            CoreLog.Debug(A, "sync_free()");
         }
     }
 

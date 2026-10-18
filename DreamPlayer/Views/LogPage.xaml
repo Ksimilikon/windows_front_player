@@ -31,8 +31,8 @@
                 <Button Style="{StaticResource DpIconButton}" Click="Copy_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.copy')}" AutomationProperties.Name="{x:Bind local:L.T('log.copy')}">
                     <FontIcon Glyph="&#xE8C8;" FontSize="14" />
                 </Button>
-                <Button Style="{StaticResource DpIconButton}" Click="OpenFile_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.open_file')}" AutomationProperties.Name="{x:Bind local:L.T('log.open_file')}">
-                    <FontIcon Glyph="&#xE8E5;" FontSize="14" />
+                <Button Style="{StaticResource DpIconButton}" Click="Save_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.save')}" AutomationProperties.Name="{x:Bind local:L.T('log.save')}">
+                    <FontIcon Glyph="&#xE74E;" FontSize="14" />
                 </Button>
                 <Button Style="{StaticResource DpIconButton}" Click="Clear_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.clear')}" AutomationProperties.Name="{x:Bind local:L.T('log.clear')}">
                     <FontIcon Glyph="&#xE74D;" FontSize="14" />
