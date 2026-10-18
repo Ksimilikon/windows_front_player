@@ -13,6 +13,8 @@
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>DreamPlayer</RootNamespace>
     <AssemblyName>DreamPlayer</AssemblyName>
+    <!-- app and installer version (scripts\build-installer.ps1) -->
+    <Version>0.2</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64</Platforms>
     <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>

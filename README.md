@@ -20,6 +20,17 @@
 
 Требуется .NET 9 SDK, Rust (MSVC), Windows 10 1809+.
 
+## Установщик
+
+`.\scripts\build-installer.ps1` (нужен [Inno Setup 6](https://jrsoftware.org/isinfo.php),
+`winget install JRSoftware.InnoSetup`) публикует приложение self-contained (.NET и Windows
+App SDK внутри — на целевой машине ничего ставить не нужно) и собирает
+`dist\DreamPlayer-<версия>-setup.exe`. Версия — `<Version>` в `DreamPlayer.csproj` или
+`-Version 1.2.0`; DLL ядра — как при сборке, или `-CoreDll path\to\dream_player.dll`.
+Установка по умолчанию для текущего пользователя (без прав администратора), установщик
+предлагает и «для всех». При удалении данные в `%LOCALAPPDATA%\DreamPlayer` остаются.
+UsbDk в установщик не входит.
+
 ## Структура
 
 - `Core/` — P/Invoke (`Native.cs`, 1:1 с `api/src/*.rs`: `idx_*`, `engine_*`, `cdc_*`,
