@@ -33,6 +33,9 @@ public sealed record Track
     /// identity that survives reloads: the db id, or the path for external files.
     public string Key => Id is { } id ? $"id:{id}" : $"path:{Path}";
 
+    /// what a screen reader says for a list row.
+    public override string ToString() => string.IsNullOrEmpty(ArtistsLine) ? Title : $"{Title} — {ArtistsLine}";
+
     internal static unsafe Track FromFfi(in FFITrackMetadata m)
     {
         var p = m.HasParams != 0 ? m.Params : default;

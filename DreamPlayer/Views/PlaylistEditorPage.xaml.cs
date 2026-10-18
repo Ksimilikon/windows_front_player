@@ -22,6 +22,8 @@ public sealed partial class PoolRow : ObservableObject
 
     [ObservableProperty]
     public partial bool IsAdded { get; set; }
+
+    public override string ToString() => Track.ToString();
 }
 
 public sealed partial class PlaylistEditorPage : UserControl, ITabPage

@@ -12,6 +12,7 @@ using DreamPlayer.Core;
 using DreamPlayer.Services;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -139,7 +140,7 @@ public sealed partial class ShellView : UserControl
     /// closes the tab hosting `page` (an editor after save / cancel).
     public void CloseTab(UIElement page)
     {
-        if (Tabs.TabItems.OfType<TabViewItem>().FirstOrDefault(t => t.Content == page) is { } tab)
+        if (Tabs.TabItems.OfType<TabViewItem>().FirstOrDefault(t => ReferenceEquals(t.Content, page)) is { } tab)
             CloseRequested(tab);
     }
 
@@ -408,7 +409,9 @@ public sealed partial class ShellView : UserControl
         ShuffleButton.IsChecked = _p.Shuffle;
         RepeatGlyph.Glyph = _p.Repeat == RepeatMode.One ? "" : "";
         RepeatGlyph.Foreground = _p.Repeat == RepeatMode.Off ? Ui.Muted : Ui.Accent;
-        ToolTipService.SetToolTip(RepeatButton, L.T($"bar.repeat_{_p.Repeat.ToString().ToLowerInvariant()}"));
+        var repeat = L.T($"bar.repeat_{_p.Repeat.ToString().ToLowerInvariant()}");
+        ToolTipService.SetToolTip(RepeatButton, repeat);
+        AutomationProperties.SetName(RepeatButton, repeat);
         SyncProgress();
         SyncVolume();
         _ = SyncCoverAsync(cur);

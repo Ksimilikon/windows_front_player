@@ -242,5 +242,5 @@ public static class Ui
     public static List<string> SplitList(string? s) =>
         (s ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
-    public static string TrackLine(Track t) => string.IsNullOrEmpty(t.ArtistsLine) ? t.Title : $"{t.Title} — {t.ArtistsLine}";
+    public static string TrackLine(Track t) => t.ToString();
 }

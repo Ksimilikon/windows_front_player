@@ -39,7 +39,7 @@
                             </DropDownButton.Flyout>
                         </DropDownButton>
                         <TextBox x:Name="ColorBox" Width="120" PlaceholderText="#RRGGBB" TextChanged="ColorBox_TextChanged" />
-                        <Button Click="ClearColor_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}">
+                        <Button Click="ClearColor_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}" AutomationProperties.Name="{x:Bind local:L.T('common.clear')}">
                             <FontIcon Glyph="&#xE711;" FontSize="14" />
                         </Button>
                     </StackPanel>
@@ -53,10 +53,10 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="CoverBox" Header="{x:Bind local:L.T('meta.cover')}" PlaceholderText="{x:Bind local:L.T('meta.cover_embedded')}" />
-                    <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                    <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}" AutomationProperties.Name="{x:Bind local:L.T('common.browse')}">
                         <FontIcon Glyph="&#xE8E5;" FontSize="14" />
                     </Button>
-                    <Button Grid.Column="2" VerticalAlignment="Bottom" Click="ClearCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}">
+                    <Button Grid.Column="2" VerticalAlignment="Bottom" Click="ClearCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}" AutomationProperties.Name="{x:Bind local:L.T('common.clear')}">
                         <FontIcon Glyph="&#xE711;" FontSize="14" />
                     </Button>
                 </Grid>
@@ -68,7 +68,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="PathBox" Header="{x:Bind local:L.T('meta.path')}" Description="{x:Bind local:L.T('editor.path_hint')}" />
-                    <Button Grid.Column="1" Margin="0,0,0,22" VerticalAlignment="Bottom" Click="BrowsePath_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                    <Button Grid.Column="1" Margin="0,0,0,22" VerticalAlignment="Bottom" Click="BrowsePath_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}" AutomationProperties.Name="{x:Bind local:L.T('common.browse')}">
                         <FontIcon Glyph="&#xE8E5;" FontSize="14" />
                     </Button>
                 </Grid>

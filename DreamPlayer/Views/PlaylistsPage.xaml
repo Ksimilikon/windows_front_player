@@ -29,7 +29,7 @@
                         HorizontalAlignment="Right"
                         Style="{StaticResource DpIconButton}"
                         Click="New_Click"
-                        ToolTipService.ToolTip="{x:Bind local:L.T('playlists.new')}">
+                        ToolTipService.ToolTip="{x:Bind local:L.T('playlists.new')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.new')}">
                         <FontIcon Glyph="&#xE710;" FontSize="14" />
                     </Button>
                 </Grid>
@@ -99,16 +99,16 @@
                                 <TextBlock Text="{x:Bind local:L.T('playlists.play')}" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="ShuffleButton" Style="{StaticResource DpIconButton}" Click="ShufflePlay_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.shuffle_play')}">
+                        <Button x:Name="ShuffleButton" Style="{StaticResource DpIconButton}" Click="ShufflePlay_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.shuffle_play')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.shuffle_play')}">
                             <FontIcon Glyph="&#xE8B1;" FontSize="14" />
                         </Button>
-                        <Button x:Name="EditButton" Style="{StaticResource DpIconButton}" Click="Edit_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.edit')}">
+                        <Button x:Name="EditButton" Style="{StaticResource DpIconButton}" Click="Edit_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.edit')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.edit')}">
                             <FontIcon Glyph="&#xE70F;" FontSize="14" />
                         </Button>
-                        <Button x:Name="ExportButton" Style="{StaticResource DpIconButton}" Click="Export_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.export')}">
+                        <Button x:Name="ExportButton" Style="{StaticResource DpIconButton}" Click="Export_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.export')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.export')}">
                             <FontIcon Glyph="&#xEDE1;" FontSize="14" />
                         </Button>
-                        <Button x:Name="DeleteButton" Style="{StaticResource DpIconButton}" Click="Delete_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.delete')}">
+                        <Button x:Name="DeleteButton" Style="{StaticResource DpIconButton}" Click="Delete_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.delete')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.delete')}">
                             <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="{StaticResource DpError}" />
                         </Button>
                     </StackPanel>
@@ -121,8 +121,8 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="TrackSearch" PlaceholderText="{x:Bind local:L.T('common.search_tracks')}" TextChanged="TrackSearch_TextChanged" />
-                    <ComboBox x:Name="SortBox" Grid.Column="1" MinWidth="150" SelectionChanged="Sort_Changed" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort')}" />
-                    <ToggleButton x:Name="SortDesc" Grid.Column="2" Style="{StaticResource DpIconToggle}" Click="SortDesc_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort_desc')}">
+                    <ComboBox x:Name="SortBox" Grid.Column="1" MinWidth="150" SelectionChanged="Sort_Changed" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort')}" AutomationProperties.Name="{x:Bind local:L.T('common.sort')}" />
+                    <ToggleButton x:Name="SortDesc" Grid.Column="2" Style="{StaticResource DpIconToggle}" Click="SortDesc_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort_desc')}" AutomationProperties.Name="{x:Bind local:L.T('common.sort_desc')}">
                         <FontIcon Glyph="&#xE8CB;" FontSize="14" />
                     </ToggleButton>
                 </Grid>

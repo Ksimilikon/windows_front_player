@@ -30,10 +30,10 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="CoverBox" Header="{x:Bind local:L.T('editor.cover')}" PlaceholderText="{x:Bind local:L.T('editor.cover_none')}" />
-                    <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                    <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}" AutomationProperties.Name="{x:Bind local:L.T('common.browse')}">
                         <FontIcon Glyph="&#xE8E5;" FontSize="14" />
                     </Button>
-                    <Button Grid.Column="2" VerticalAlignment="Bottom" Click="ClearCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}">
+                    <Button Grid.Column="2" VerticalAlignment="Bottom" Click="ClearCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.clear')}" AutomationProperties.Name="{x:Bind local:L.T('common.clear')}">
                         <FontIcon Glyph="&#xE711;" FontSize="14" />
                     </Button>
                 </Grid>
@@ -66,10 +66,10 @@
                     <Grid>
                         <TextBlock x:Name="AssembledTitle" Style="{StaticResource DpPaneTitle}" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
-                            <Button Style="{StaticResource DpIconButton}" Click="RemoveSelected_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.remove_selected')}">
+                            <Button Style="{StaticResource DpIconButton}" Click="RemoveSelected_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.remove_selected')}" AutomationProperties.Name="{x:Bind local:L.T('editor.remove_selected')}">
                                 <FontIcon Glyph="&#xE738;" FontSize="14" />
                             </Button>
-                            <Button Style="{StaticResource DpIconButton}" Click="SortAssembled_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.sort_assembled')}">
+                            <Button Style="{StaticResource DpIconButton}" Click="SortAssembled_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.sort_assembled')}" AutomationProperties.Name="{x:Bind local:L.T('editor.sort_assembled')}">
                                 <FontIcon Glyph="&#xE8CB;" FontSize="14" />
                             </Button>
                         </StackPanel>
@@ -131,10 +131,10 @@
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="PoolSearch" PlaceholderText="{x:Bind local:L.T('common.search_tracks')}" TextChanged="PoolSearch_TextChanged" />
                         <ComboBox x:Name="SortBox" Grid.Column="1" MinWidth="130" SelectionChanged="SortBox_SelectionChanged" />
-                        <ToggleButton x:Name="SortDesc" Grid.Column="2" Style="{StaticResource DpIconToggle}" Click="PoolOption_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort_desc')}">
+                        <ToggleButton x:Name="SortDesc" Grid.Column="2" Style="{StaticResource DpIconToggle}" Click="PoolOption_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort_desc')}" AutomationProperties.Name="{x:Bind local:L.T('common.sort_desc')}">
                             <FontIcon Glyph="&#xE8CB;" FontSize="14" />
                         </ToggleButton>
-                        <ToggleButton x:Name="HideAdded" Grid.Column="3" Style="{StaticResource DpIconToggle}" IsChecked="True" Click="PoolOption_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.hide_added')}">
+                        <ToggleButton x:Name="HideAdded" Grid.Column="3" Style="{StaticResource DpIconToggle}" IsChecked="True" Click="PoolOption_Click" ToolTipService.ToolTip="{x:Bind local:L.T('editor.hide_added')}" AutomationProperties.Name="{x:Bind local:L.T('editor.hide_added')}">
                             <FontIcon Glyph="&#xE7B3;" FontSize="14" />
                         </ToggleButton>
                     </Grid>

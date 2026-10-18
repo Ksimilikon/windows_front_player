@@ -109,11 +109,14 @@ public static unsafe class CoreApi
 
     public static InitStatus Init(string cache, string config, string data, string music)
     {
+        // works before `init` and is missing in cores with the old (status-less)
+        // ABI: such a core throws EntryPointNotFoundException here, before an
+        // `init` with a mismatched signature is called.
+        var panics = Native.CorePanicCount();
         var st = Run("init", $"init(cache={Q(cache)}, config={Q(config)}, data={Q(data)}, music={Q(music)}, need_db=true)",
             () => Native.Init(cache, config, data, music, true));
         Initialized = st is InitStatus.Ok or InitStatus.AlreadyInitialized;
-        if (Initialized)
-            _panics = Native.CorePanicCount();
+        _panics = panics;
         return st;
     }
 
@@ -142,8 +145,10 @@ public static unsafe class CoreApi
         public static EngineStatus SetSpeed(float v) => Run(A, $"engine_set_speed({v:0.00})", () => Native.EngineSetSpeed(v));
         public static EngineStatus Seek(ulong secs) => Run(A, $"engine_set_seek({secs})", () => Native.EngineSetSeek(secs));
 
+        /// quiet: a slider drag calls it on every step (the db write that
+        /// follows is logged).
         public static EngineStatus SetTrackVolume(float v) =>
-            Run(A, $"engine_set_volume_track({v:0.00})", () => Native.EngineSetVolumeTrack(v));
+            Run(A, $"engine_set_volume_track({v:0.00})", () => Native.EngineSetVolumeTrack(v), quiet: true);
 
         public static EngineStatus SetMasterVolume(float v) =>
             Run(A, $"engine_set_volume_master({v:0.00})", () => Native.EngineSetVolumeMaster(v));

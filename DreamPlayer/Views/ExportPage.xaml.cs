@@ -10,7 +10,10 @@ using Microsoft.UI.Xaml.Controls;
 namespace DreamPlayer.Views;
 
 /// a row of the selection list: a playlist (by name) or a track (by id).
-public sealed record ExportItem(string Title, string Subtitle, string? Playlist, long? TrackId);
+public sealed record ExportItem(string Title, string Subtitle, string? Playlist, long? TrackId)
+{
+    public override string ToString() => $"{Title}, {Subtitle}";
+}
 
 public sealed partial class ExportPage : UserControl, ITabPage
 {

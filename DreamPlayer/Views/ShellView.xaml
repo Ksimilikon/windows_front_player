@@ -31,7 +31,7 @@
                     x:Name="MenuButton"
                     Margin="6,6,6,0"
                     Style="{StaticResource DpIconButton}"
-                    ToolTipService.ToolTip="{x:Bind local:L.T('menu.tooltip')}">
+                    ToolTipService.ToolTip="{x:Bind local:L.T('menu.tooltip')}" AutomationProperties.Name="{x:Bind local:L.T('menu.tooltip')}">
                     <FontIcon FontFamily="{StaticResource DpIcons}" Glyph="&#xE700;" />
                     <Button.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedLeft">
@@ -106,7 +106,7 @@
                 BorderThickness="0"
                 HorizontalContentAlignment="Left"
                 Click="NowButton_Click"
-                ToolTipService.ToolTip="{x:Bind local:L.T('bar.open_song')}">
+                ToolTipService.ToolTip="{x:Bind local:L.T('bar.open_song')}" AutomationProperties.Name="{x:Bind local:L.T('bar.open_song')}">
                 <Grid ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="48" />
@@ -151,13 +151,13 @@
                     x:Name="ShuffleButton"
                     Style="{StaticResource DpIconToggle}"
                     Click="Shuffle_Click"
-                    ToolTipService.ToolTip="{x:Bind local:L.T('bar.shuffle')}">
+                    ToolTipService.ToolTip="{x:Bind local:L.T('bar.shuffle')}" AutomationProperties.Name="{x:Bind local:L.T('bar.shuffle')}">
                     <FontIcon Glyph="&#xE8B1;" FontSize="16" />
                 </ToggleButton>
-                <Button x:Name="PrevButton" Style="{StaticResource DpIconButton}" Click="Prev_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.prev')}">
+                <Button x:Name="PrevButton" Style="{StaticResource DpIconButton}" Click="Prev_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.prev')}" AutomationProperties.Name="{x:Bind local:L.T('bar.prev')}">
                     <FontIcon Glyph="&#xE892;" FontSize="16" />
                 </Button>
-                <Button x:Name="BackButton" Style="{StaticResource DpIconButton}" Click="Back_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.rewind')}">
+                <Button x:Name="BackButton" Style="{StaticResource DpIconButton}" Click="Back_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.rewind')}" AutomationProperties.Name="{x:Bind local:L.T('bar.rewind')}">
                     <FontIcon Glyph="&#xEB9E;" FontSize="16" />
                 </Button>
                 <Button
@@ -168,16 +168,16 @@
                     Padding="0"
                     Style="{StaticResource AccentButtonStyle}"
                     Click="Play_Click"
-                    ToolTipService.ToolTip="{x:Bind local:L.T('bar.play_pause')}">
+                    ToolTipService.ToolTip="{x:Bind local:L.T('bar.play_pause')}" AutomationProperties.Name="{x:Bind local:L.T('bar.play_pause')}">
                     <FontIcon x:Name="PlayGlyph" Glyph="&#xE768;" FontSize="18" />
                 </Button>
-                <Button x:Name="ForwardButton" Style="{StaticResource DpIconButton}" Click="Forward_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.forward')}">
+                <Button x:Name="ForwardButton" Style="{StaticResource DpIconButton}" Click="Forward_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.forward')}" AutomationProperties.Name="{x:Bind local:L.T('bar.forward')}">
                     <FontIcon Glyph="&#xEB9D;" FontSize="16" />
                 </Button>
-                <Button x:Name="NextButton" Style="{StaticResource DpIconButton}" Click="Next_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.next')}">
+                <Button x:Name="NextButton" Style="{StaticResource DpIconButton}" Click="Next_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.next')}" AutomationProperties.Name="{x:Bind local:L.T('bar.next')}">
                     <FontIcon Glyph="&#xE893;" FontSize="16" />
                 </Button>
-                <Button x:Name="StopButton" Style="{StaticResource DpIconButton}" Click="Stop_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.stop')}">
+                <Button x:Name="StopButton" Style="{StaticResource DpIconButton}" Click="Stop_Click" ToolTipService.ToolTip="{x:Bind local:L.T('bar.stop')}" AutomationProperties.Name="{x:Bind local:L.T('bar.stop')}">
                     <FontIcon Glyph="&#xE71A;" FontSize="16" />
                 </Button>
                 <Button x:Name="RepeatButton" Style="{StaticResource DpIconButton}" Click="Repeat_Click">
@@ -202,7 +202,7 @@
                 Glyph="&#xE767;"
                 FontSize="16"
                 VerticalAlignment="Center"
-                ToolTipService.ToolTip="{x:Bind local:L.T('bar.master_volume')}" />
+                ToolTipService.ToolTip="{x:Bind local:L.T('bar.master_volume')}" AutomationProperties.Name="{x:Bind local:L.T('bar.master_volume')}" />
             <Slider
                 x:Name="VolumeSlider"
                 Grid.Column="1"

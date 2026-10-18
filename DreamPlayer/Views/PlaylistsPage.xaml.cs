@@ -20,6 +20,8 @@ public sealed partial class PlaylistRow : ObservableObject
 
     [ObservableProperty]
     public partial bool IsPlaying { get; set; }
+
+    public override string ToString() => $"{View.DisplayName}, {View.CountText}";
 }
 
 public sealed partial class PlaylistsPage : UserControl, ITabPage

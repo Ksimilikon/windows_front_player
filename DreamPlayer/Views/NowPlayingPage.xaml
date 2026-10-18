@@ -28,10 +28,10 @@
                     <TextBlock x:Name="InfoText" Style="{StaticResource DpMuted}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <Button Click="ScrollToCurrent_Click" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('now.to_current')}">
+                    <Button Click="ScrollToCurrent_Click" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('now.to_current')}" AutomationProperties.Name="{x:Bind local:L.T('now.to_current')}">
                         <FontIcon Glyph="&#xE81D;" FontSize="14" />
                     </Button>
-                    <Button Click="Edit_Click" x:Name="EditButton" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.edit')}">
+                    <Button Click="Edit_Click" x:Name="EditButton" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.edit')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.edit')}">
                         <FontIcon Glyph="&#xE70F;" FontSize="14" />
                     </Button>
                 </StackPanel>

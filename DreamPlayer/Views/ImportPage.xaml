@@ -24,7 +24,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBox x:Name="PacketBox" Header="{x:Bind local:L.T('import.packet')}" TextChanged="Inputs_Changed" />
-                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowsePacket_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowsePacket_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}" AutomationProperties.Name="{x:Bind local:L.T('common.browse')}">
                     <FontIcon Glyph="&#xE8E5;" FontSize="14" />
                 </Button>
             </Grid>
@@ -35,7 +35,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBox x:Name="SaveToBox" Header="{x:Bind local:L.T('import.save_to')}" TextChanged="Inputs_Changed" />
-                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseSaveTo_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}">
+                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseSaveTo_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}" AutomationProperties.Name="{x:Bind local:L.T('common.browse')}">
                     <FontIcon Glyph="&#xE8B7;" FontSize="14" />
                 </Button>
             </Grid>

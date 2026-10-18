@@ -17,7 +17,7 @@
 
             <!-- per-track volume (0..200%) -->
             <StackPanel VerticalAlignment="Top" Spacing="6" Width="64">
-                <FontIcon Glyph="&#xE767;" FontSize="16" HorizontalAlignment="Center" ToolTipService.ToolTip="{x:Bind local:L.T('song.volume')}" />
+                <FontIcon Glyph="&#xE767;" FontSize="16" HorizontalAlignment="Center" ToolTipService.ToolTip="{x:Bind local:L.T('song.volume')}" AutomationProperties.Name="{x:Bind local:L.T('song.volume')}" />
                 <TextBlock x:Name="VolumeText" HorizontalAlignment="Center" FontWeight="SemiBold" />
                 <Slider
                     x:Name="VolumeSlider"
@@ -31,7 +31,7 @@
                     TickPlacement="Outside"
                     ValueChanged="VolumeSlider_ValueChanged"
                     PointerWheelChanged="VolumeSlider_PointerWheelChanged" />
-                <Button HorizontalAlignment="Center" Padding="8,2" Content="100%" Click="ResetVolume_Click" ToolTipService.ToolTip="{x:Bind local:L.T('song.volume_reset')}" />
+                <Button HorizontalAlignment="Center" Padding="8,2" Content="100%" Click="ResetVolume_Click" ToolTipService.ToolTip="{x:Bind local:L.T('song.volume_reset')}" AutomationProperties.Name="{x:Bind local:L.T('song.volume_reset')}" />
             </StackPanel>
 
             <!-- cover -->
@@ -73,7 +73,7 @@
                             <TextBlock Text="{x:Bind local:L.T('track.edit_meta')}" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="FolderButton" Click="Folder_Click" ToolTipService.ToolTip="{x:Bind local:L.T('track.show_in_folder')}">
+                    <Button x:Name="FolderButton" Click="Folder_Click" ToolTipService.ToolTip="{x:Bind local:L.T('track.show_in_folder')}" AutomationProperties.Name="{x:Bind local:L.T('track.show_in_folder')}">
                         <FontIcon Glyph="&#xE838;" FontSize="14" />
                     </Button>
                 </StackPanel>

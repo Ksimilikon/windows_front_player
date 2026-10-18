@@ -27,6 +27,8 @@ public sealed partial class TrackItem : ObservableObject
 
     [ObservableProperty]
     public partial bool IsCurrent { get; set; }
+
+    public override string ToString() => $"{Number}. {Track}";
 }
 
 public sealed partial class Player : ObservableObject
@@ -152,7 +154,7 @@ public sealed partial class Player : ObservableObject
             Notify?.Invoke(L.T("msg.playlist_empty"), LogLevel.Warn);
             return;
         }
-        CoreLog.Info("player", $"start playlist \"{pl.Name}\" ({tracks.Count} track(s)) from #{start + 1}");
+        CoreLog.Info("player", $"start playlist \"{pl.DisplayName}\" ({tracks.Count} track(s)) from #{start + 1}");
         _suppressQueueEvents = true;
         Queue.Clear();
         foreach (var t in tracks)

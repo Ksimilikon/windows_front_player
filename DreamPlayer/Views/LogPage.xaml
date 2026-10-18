@@ -25,16 +25,16 @@
             <ComboBox x:Name="LevelBox" MinWidth="200" SelectionChanged="LevelBox_SelectionChanged" />
             <TextBox x:Name="Search" Grid.Column="1" PlaceholderText="{x:Bind local:L.T('log.search')}" TextChanged="Search_TextChanged" />
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
-                <ToggleButton x:Name="FollowToggle" IsChecked="True" Style="{StaticResource DpIconToggle}" ToolTipService.ToolTip="{x:Bind local:L.T('log.follow')}">
+                <ToggleButton x:Name="FollowToggle" IsChecked="True" Style="{StaticResource DpIconToggle}" ToolTipService.ToolTip="{x:Bind local:L.T('log.follow')}" AutomationProperties.Name="{x:Bind local:L.T('log.follow')}">
                     <FontIcon Glyph="&#xE74B;" FontSize="14" />
                 </ToggleButton>
-                <Button Style="{StaticResource DpIconButton}" Click="Copy_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.copy')}">
+                <Button Style="{StaticResource DpIconButton}" Click="Copy_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.copy')}" AutomationProperties.Name="{x:Bind local:L.T('log.copy')}">
                     <FontIcon Glyph="&#xE8C8;" FontSize="14" />
                 </Button>
-                <Button Style="{StaticResource DpIconButton}" Click="OpenFile_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.open_file')}">
+                <Button Style="{StaticResource DpIconButton}" Click="OpenFile_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.open_file')}" AutomationProperties.Name="{x:Bind local:L.T('log.open_file')}">
                     <FontIcon Glyph="&#xE8E5;" FontSize="14" />
                 </Button>
-                <Button Style="{StaticResource DpIconButton}" Click="Clear_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.clear')}">
+                <Button Style="{StaticResource DpIconButton}" Click="Clear_Click" ToolTipService.ToolTip="{x:Bind local:L.T('log.clear')}" AutomationProperties.Name="{x:Bind local:L.T('log.clear')}">
                     <FontIcon Glyph="&#xE74D;" FontSize="14" />
                 </Button>
             </StackPanel>

@@ -11,26 +11,28 @@ namespace DreamPlayer.Views;
 public static class Covers
 {
     private const int CacheSize = 64;
-    private static readonly Dictionary<string, byte[]?> Cache = [];
+    /// the fetch itself is cached: concurrent requests (bottom bar, song tab,
+    /// SMTC) for one track share a single core call. UI thread only.
+    private static readonly Dictionary<string, Task<byte[]?>> Cache = [];
     private static readonly LinkedList<string> Order = new();
 
     /// the cache key changes when the cover file of the track changes.
     private static string Key(Track t) => $"{t.Key}|{t.CoverArt}";
 
-    public static async Task<byte[]?> BytesAsync(Track t)
+    public static Task<byte[]?> BytesAsync(Track t)
     {
         var key = Key(t);
         if (Cache.TryGetValue(key, out var cached))
             return cached;
-        var bytes = await Task.Run(() => CoreApi.Library.Cover(t));
-        Cache[key] = bytes;
+        var fetch = Task.Run(() => CoreApi.Library.Cover(t));
+        Cache[key] = fetch;
         Order.AddLast(key);
         while (Order.Count > CacheSize)
         {
             Cache.Remove(Order.First!.Value);
             Order.RemoveFirst();
         }
-        return bytes;
+        return fetch;
     }
 
     public static void Forget(Track t)
