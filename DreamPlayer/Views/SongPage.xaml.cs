@@ -28,6 +28,7 @@ public sealed partial class SongPage : UserControl, ITabPage
         FollowsPlayer = track is null;
         _p.PropertyChanged += OnPlayerChanged;
         Library.Instance.Changed += OnLibraryChanged;
+        Covers.Invalidated += OnCoversInvalidated;
         Show(track ?? _p.Current?.Track);
     }
 
@@ -37,6 +38,7 @@ public sealed partial class SongPage : UserControl, ITabPage
     {
         _p.PropertyChanged -= OnPlayerChanged;
         Library.Instance.Changed -= OnLibraryChanged;
+        Covers.Invalidated -= OnCoversInvalidated;
     }
 
     private bool IsPlaying => _track is not null && _p.Current?.Track.Key == _track.Key;
@@ -62,6 +64,12 @@ public sealed partial class SongPage : UserControl, ITabPage
         // metadata edited elsewhere: show the fresh copy.
         if (_track?.Id is { } id && Library.Instance.TrackById(id) is { } fresh)
             Show(fresh);
+    }
+
+    private void OnCoversInvalidated(IReadOnlySet<string> changed)
+    {
+        if (_track is { } t && changed.Contains(t.Key))
+            _ = LoadCoverAsync(t);
     }
 
     private void Show(Track? t)

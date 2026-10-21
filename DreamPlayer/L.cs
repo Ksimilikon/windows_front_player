@@ -22,7 +22,7 @@ public static class L
         // tabs
         ["tab.playlists"] = "Playlists",
         ["tab.now"] = "Now playing",
-        ["tab.now_named"] = "{0}",
+        ["tab.now_named"] = "{0} *",
         ["tab.song"] = "Song",
         ["tab.new_playlist"] = "New playlist",
         ["tab.edit_playlist"] = "Edit: {0}",
@@ -126,8 +126,6 @@ public static class L
         ["now.to_current"] = "Scroll to the playing track",
         ["now.revert"] = "Revert",
         ["now.save_order"] = "Save order",
-        ["now.dirty"] = "The order was changed for this session only. Save it to the playlist?",
-        ["now.dirty_pool"] = "The order was changed for this session only (\"All songs\" has no order to save).",
         ["now.pool_hint"] = "all songs",
 
         // song tab
@@ -170,7 +168,7 @@ public static class L
 
         // import
         ["import.title"] = "Import a packet",
-        ["import.hint"] = "New songs and covers from the packet are written to the target folder (existing files are never overwritten), then added to the library. Playlists are matched by name.",
+        ["import.hint"] = "New songs from the packet are written to the target folder, covers that are files of their own — to the app folder (existing files are never overwritten); then everything is added to the library. Playlists are matched by name.",
         ["import.packet"] = "Packet file",
         ["import.save_to"] = "Write new files to",
         ["import.force"] = "Force",
@@ -195,7 +193,7 @@ public static class L
         ["export.mode_tracks"] = "Tracks",
         ["export.audio"] = "Audio files",
         ["export.names"] = "File names",
-        ["export.covers"] = "Playlist covers",
+        ["export.covers"] = "Covers (songs and playlists)",
         ["export.run"] = "Export…",
         ["export.ready"] = "Choose what to export, then pick the target file.",
         ["export.select_all"] = "All",
@@ -566,6 +564,15 @@ public static class L
         ["st.WireStatus.Cancelled"] = "cancelled",
         ["st.WireStatus.Internal"] = "internal error",
         ["st.WireStatus.ModeMismatch"] = "the other side runs another mode (sync / send / receive)",
+
+        // v0.21: playlist tabs, covers
+        ["playlists.open_tab"] = "Open in a tab",
+        ["editor.drop_add"] = "Add to the playlist: {0}",
+        ["editor.drop_remove"] = "Remove from the playlist: {0}",
+        ["editor.embed_cover"] = "Embed the cover into the audio file (PNG / JPG)",
+        ["editor.embed_cover_hint"] = "The picture is written into the tags of the file itself (and syncs with it); the link to a separate cover file is removed.",
+        ["msg.embed_bad_image"] = "Not embedded: the picture is unreadable or not PNG / JPG — {0}",
+        ["msg.embed_failed"] = "Failed to embed the cover: {0}",
     };
 
     private static readonly Dictionary<string, string> Ru = new()
@@ -573,7 +580,7 @@ public static class L
         // вкладки
         ["tab.playlists"] = "Плейлисты",
         ["tab.now"] = "Сейчас играет",
-        ["tab.now_named"] = "{0}",
+        ["tab.now_named"] = "{0} *",
         ["tab.song"] = "Песня",
         ["tab.new_playlist"] = "Новый плейлист",
         ["tab.edit_playlist"] = "Изменение: {0}",
@@ -677,8 +684,6 @@ public static class L
         ["now.to_current"] = "К играющему треку",
         ["now.revert"] = "Вернуть",
         ["now.save_order"] = "Сохранить порядок",
-        ["now.dirty"] = "Порядок изменён только на этот сеанс. Сохранить его в плейлист?",
-        ["now.dirty_pool"] = "Порядок изменён только на этот сеанс (у «Всех песен» нет порядка для сохранения).",
         ["now.pool_hint"] = "все песни",
 
         // песня
@@ -721,7 +726,7 @@ public static class L
 
         // импорт
         ["import.title"] = "Импорт пакета",
-        ["import.hint"] = "Новые песни и обложки из пакета записываются в целевую папку (существующие файлы не перезаписываются) и добавляются в библиотеку. Плейлисты сопоставляются по названию.",
+        ["import.hint"] = "Новые песни из пакета записываются в целевую папку, обложки отдельными файлами — в папку приложения (существующие файлы не перезаписываются), затем всё добавляется в библиотеку. Плейлисты сопоставляются по названию.",
         ["import.packet"] = "Файл пакета",
         ["import.save_to"] = "Куда записать новые файлы",
         ["import.force"] = "Принудительно",
@@ -746,7 +751,7 @@ public static class L
         ["export.mode_tracks"] = "Треки",
         ["export.audio"] = "Аудиофайлы",
         ["export.names"] = "Имена файлов",
-        ["export.covers"] = "Обложки плейлистов",
+        ["export.covers"] = "Обложки (песен и плейлистов)",
         ["export.run"] = "Экспортировать…",
         ["export.ready"] = "Выберите, что экспортировать, затем укажите файл.",
         ["export.select_all"] = "Все",
@@ -1117,5 +1122,14 @@ public static class L
         ["st.WireStatus.Cancelled"] = "отменено",
         ["st.WireStatus.Internal"] = "внутренняя ошибка",
         ["st.WireStatus.ModeMismatch"] = "другая сторона в другом режиме (синхронизация / отправка / приём)",
+
+        // v0.21: playlist tabs, covers
+        ["playlists.open_tab"] = "Открыть во вкладке",
+        ["editor.drop_add"] = "Добавить в плейлист: {0}",
+        ["editor.drop_remove"] = "Убрать из плейлиста: {0}",
+        ["editor.embed_cover"] = "Встроить обложку в аудиофайл (PNG / JPG)",
+        ["editor.embed_cover_hint"] = "Картинка записывается в теги самого файла (и синхронизируется с ним); ссылка на отдельный файл обложки убирается.",
+        ["msg.embed_bad_image"] = "Не удалось встроить: картинка не читается или не PNG / JPG — {0}",
+        ["msg.embed_failed"] = "Не удалось встроить обложку: {0}",
     };
 }

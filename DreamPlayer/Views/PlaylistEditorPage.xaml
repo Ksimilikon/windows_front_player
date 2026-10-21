@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- NEW / EDIT PLAYLIST: name and cover on top, the playlist being assembled
-     on the left (drag-n-drop order), the song pool on the right. -->
+     on the left (drag-n-drop order), the song pool on the right. Songs are
+     dragged from the pool into the playlist (to the drop place) and out of
+     it back onto the pool. -->
 <UserControl
     x:Class="DreamPlayer.Views.PlaylistEditorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -82,6 +84,10 @@
                         CanReorderItems="True"
                         CanDragItems="True"
                         AllowDrop="True"
+                        DragItemsStarting="AssembledList_DragItemsStarting"
+                        DragItemsCompleted="List_DragItemsCompleted"
+                        DragOver="AssembledList_DragOver"
+                        Drop="AssembledList_Drop"
                         DoubleTapped="AssembledList_DoubleTapped"
                         KeyDown="AssembledList_KeyDown">
                         <ListView.ItemTemplate>
@@ -89,15 +95,17 @@
                                 <Grid Padding="0,5" ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="4" />
+                                        <ColumnDefinition Width="32" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
                                     <Border CornerRadius="2" Background="{x:Bind views:Ui.ColorBrush(Color)}" />
-                                    <StackPanel Grid.Column="1">
+                                    <views:CoverThumb Grid.Column="1" Width="32" Height="32" Track="{x:Bind}" />
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                         <TextBlock Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Invalid)}" />
                                         <TextBlock Text="{x:Bind ArtistsLine}" Style="{StaticResource DpMuted}" />
                                     </StackPanel>
-                                    <TextBlock Grid.Column="2" Text="{x:Bind DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                                    <TextBlock Grid.Column="3" Text="{x:Bind DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -142,6 +150,12 @@
                         x:Name="PoolList"
                         Grid.Row="2"
                         SelectionMode="Extended"
+                        CanDragItems="True"
+                        AllowDrop="True"
+                        DragItemsStarting="PoolList_DragItemsStarting"
+                        DragItemsCompleted="List_DragItemsCompleted"
+                        DragOver="PoolList_DragOver"
+                        Drop="PoolList_Drop"
                         DoubleTapped="PoolList_DoubleTapped"
                         KeyDown="PoolList_KeyDown">
                         <ListView.ItemTemplate>
@@ -149,15 +163,17 @@
                                 <Grid Padding="0,5" ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="32" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
                                     <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="{StaticResource DpAccent}" Visibility="{x:Bind IsAdded, Mode=OneWay}" />
-                                    <StackPanel Grid.Column="1">
+                                    <views:CoverThumb Grid.Column="1" Width="32" Height="32" Track="{x:Bind Track}" />
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                         <TextBlock Text="{x:Bind Track.Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Track.Invalid)}" />
                                         <TextBlock Text="{x:Bind Track.ArtistsLine}" Style="{StaticResource DpMuted}" />
                                     </StackPanel>
-                                    <TextBlock Grid.Column="2" Text="{x:Bind Track.DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                                    <TextBlock Grid.Column="3" Text="{x:Bind Track.DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

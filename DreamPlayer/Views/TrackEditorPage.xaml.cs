@@ -1,5 +1,7 @@
 // Track metadata editor (the TUI MOD_SONG_ tab). Only changed fields are sent
 // to the core, each with its own `idx_set_track_*` call (visible in the log).
+// The cover is either a file linked in the db or, with "embed", a picture
+// written into the audio file itself (`idx_embed_track_cover`).
 
 using DreamPlayer.Core;
 using DreamPlayer.Services;
@@ -29,6 +31,7 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
         PathBox.Text = t.Path ?? "";
         InvalidBox.IsChecked = t.Invalid;
         KeepBox.IsChecked = t.IgnoreOrphan;
+        SyncEmbed();
         SyncSwatch();
         FillReadOnly();
     }
@@ -131,21 +134,43 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
         if (!string.Equals(hex, _t.Color ?? "", StringComparison.OrdinalIgnoreCase))
             results.Add(CoreApi.Library.SetColor(id, Null(hex)));
 
-        var cover = CoverBox.Text.Trim();
-        if (cover != (_t.CoverArt ?? ""))
-        {
-            if (cover.Length > 0 && !File.Exists(cover))
-                ShellView.Current?.Notify(L.F("msg.cover_missing", cover), LogLevel.Warn);
-            results.Add(CoreApi.Library.SetCover(id, Null(cover)));
-            Covers.Forget(_t);
-        }
-
         var path = PathBox.Text.Trim();
         if (path.Length > 0 && path != (_t.Path ?? ""))
         {
             if (!File.Exists(path))
                 ShellView.Current?.Notify(L.F("msg.path_missing", path), LogLevel.Warn);
             results.Add(CoreApi.Library.SetPath(id, path));
+            Covers.Forget(_t);
+        }
+
+        // after the path: the picture goes into the file the db points at.
+        var cover = CoverBox.Text.Trim();
+        var embedded = false;
+        if (EmbedBox.IsChecked == true && CanEmbed(cover))
+        {
+            var st = CoreApi.Library.EmbedCover(id, cover);
+            results.Add(st);
+            if (st == IdxStatus.Ok)
+            {
+                embedded = true;
+                // a cover file of the track is shown over the embedded one:
+                // the picture is in the audio now, the link goes.
+                if (_t.CoverArt is not null)
+                    results.Add(CoreApi.Library.SetCover(id, null));
+            }
+            else
+            {
+                ShellView.Current?.Notify(st == IdxStatus.InvalidArgument
+                    ? L.F("msg.embed_bad_image", cover)
+                    : L.F("msg.embed_failed", CoreApi.Describe(st)), LogLevel.Error);
+            }
+            Covers.Forget(_t);
+        }
+        else if (cover != (_t.CoverArt ?? ""))
+        {
+            if (cover.Length > 0 && !File.Exists(cover))
+                ShellView.Current?.Notify(L.F("msg.cover_missing", cover), LogLevel.Warn);
+            results.Add(CoreApi.Library.SetCover(id, Null(cover)));
             Covers.Forget(_t);
         }
 
@@ -165,11 +190,28 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
         else
             ShellView.Current?.Notify(L.F("msg.meta_failed", failed, results.Count), LogLevel.Error);
         ShellView.Current?.ReloadLibrary();
+        // the audio file has a new picture under the same path.
+        if (embedded && Library.Instance.TrackById(id)?.Path is { } audio)
+            Covers.Invalidate(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { audio });
         if (failed == 0)
             ShellView.Current?.CloseTab(this);
     }
 
     private static string? Null(string s) => s.Length == 0 ? null : s;
+
+    /// the core embeds png / jpg only.
+    private static bool CanEmbed(string path) =>
+        Path.GetExtension(path).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg";
+
+    private void SyncEmbed()
+    {
+        var can = CanEmbed(CoverBox.Text.Trim());
+        EmbedBox.IsEnabled = can && _t.Path is not null;
+        if (!can)
+            EmbedBox.IsChecked = false;
+    }
+
+    private void CoverBox_TextChanged(object sender, TextChangedEventArgs e) => SyncEmbed();
 
     // ───────────────────────── events ─────────────────────────
 

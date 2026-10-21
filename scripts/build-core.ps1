@@ -40,7 +40,8 @@ $reserved = @(Invoke-Git ls-tree -r --name-only $Ref | Where-Object { $_ -match 
 $tar = Join-Path $BuildDir "core.tar"
 Invoke-Git archive --format=tar -o $tar $Ref
 $exclude = $reserved | ForEach-Object { "--exclude=$_" }
-& tar -xf $tar -C $src @exclude
+# tar of Windows: a GNU tar earlier in PATH (Git Bash) takes `C:` for a host.
+& (Join-Path $env:SystemRoot "System32\tar.exe") -xf $tar -C $src @exclude
 if ($LASTEXITCODE -ne 0) { throw "tar failed" }
 Remove-Item $tar
 

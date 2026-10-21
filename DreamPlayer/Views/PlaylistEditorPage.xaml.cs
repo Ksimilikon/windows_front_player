@@ -1,6 +1,7 @@
 // Playlist editor (create / edit), the TUI NEW_PLAYLIST / MOD_<name> tab:
 // name + cover, the assembled list (drag-n-drop order, Delete removes), the
-// pool with search, sorting and "hide added". Saving writes the playlist by
+// pool with search, sorting and "hide added"; songs are also dragged from the
+// pool into the playlist and back out of it. Saving writes the playlist by
 // name; a rename saves under the new name and removes the old one.
 
 using System.Collections.ObjectModel;
@@ -10,6 +11,7 @@ using DreamPlayer.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
 namespace DreamPlayer.Views;
@@ -32,6 +34,9 @@ public sealed partial class PlaylistEditorPage : UserControl, ITabPage
     private readonly PlaylistView? _original;
     private readonly ObservableCollection<Track> _assembled = [];
     private List<PoolRow> _pool = [];
+    /// the songs being dragged out of the pool / out of the playlist.
+    private List<Track>? _dragFromPool;
+    private List<Track>? _dragFromAssembled;
 
     public PlaylistEditorPage(PlaylistView? pl)
     {
@@ -104,25 +109,33 @@ public sealed partial class PlaylistEditorPage : UserControl, ITabPage
 
     private void ShowAssembled()
     {
+        // dragging out (to remove) works filtered too, reordering doesn't.
         if (!Filtering)
         {
             AssembledList.ItemsSource = _assembled;
             AssembledList.CanReorderItems = true;
-            AssembledList.CanDragItems = true;
             return;
         }
         AssembledList.CanReorderItems = false;
-        AssembledList.CanDragItems = false;
         AssembledList.ItemsSource = _assembled.Where(t => TrackFilter.Matches(t, AssembledSearch.Text)).ToList();
     }
 
     // ───────────────────────── edit ─────────────────────────
 
-    private void Add(IEnumerable<Track> tracks)
+    /// adds the songs not in the playlist yet: at the end or before `at`.
+    private void Add(IEnumerable<Track> tracks, int? at = null)
     {
         var have = _assembled.Select(t => t.Key).ToHashSet();
-        foreach (var t in tracks.Where(t => t.Id is not null && have.Add(t.Key)))
-            _assembled.Add(t);
+        var i = Math.Clamp(at ?? _assembled.Count, 0, _assembled.Count);
+        foreach (var t in tracks.Where(t => t.Id is not null && have.Add(t.Key)).ToList())
+            _assembled.Insert(i++, t);
+    }
+
+    private void Remove(IEnumerable<Track> tracks)
+    {
+        var drop = tracks.Select(t => t.Key).ToHashSet();
+        foreach (var t in _assembled.Where(t => drop.Contains(t.Key)).ToList())
+            _assembled.Remove(t);
     }
 
     private void RemoveSelected()
@@ -227,5 +240,79 @@ public sealed partial class PlaylistEditorPage : UserControl, ITabPage
             Add(PoolList.SelectedItems.OfType<PoolRow>().Select(r => r.Track).ToList());
             e.Handled = true;
         }
+    }
+
+    // ───────────────────────── drag-n-drop ─────────────────────────
+    // pool -> playlist: add at the drop place; playlist -> pool: remove.
+    // Reordering inside the playlist is the ListView's own (CanReorderItems).
+
+    private void PoolList_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        _dragFromPool = e.Items.OfType<PoolRow>().Select(r => r.Track).ToList();
+        e.Data.SetText(string.Join(Environment.NewLine, _dragFromPool));
+        e.Data.RequestedOperation = DataPackageOperation.Copy;
+    }
+
+    private void AssembledList_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        _dragFromAssembled = e.Items.OfType<Track>().ToList();
+        e.Data.SetText(string.Join(Environment.NewLine, _dragFromAssembled));
+    }
+
+    private void List_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
+    {
+        _dragFromPool = null;
+        _dragFromAssembled = null;
+    }
+
+    private void AssembledList_DragOver(object sender, DragEventArgs e)
+    {
+        if (_dragFromPool is not { } tracks)
+            return;
+        e.AcceptedOperation = DataPackageOperation.Copy;
+        e.DragUIOverride.Caption = L.F("editor.drop_add", tracks.Count);
+    }
+
+    private void AssembledList_Drop(object sender, DragEventArgs e)
+    {
+        if (_dragFromPool is not { } tracks)
+            return;
+        // the row under the pointer (the shown list may be filtered).
+        var shown = DropIndex(AssembledList, e);
+        int? at = shown < AssembledList.Items.Count && AssembledList.Items[shown] is Track before
+            ? _assembled.IndexOf(before)
+            : null;
+        Add(tracks, at);
+        _dragFromPool = null;
+    }
+
+    private void PoolList_DragOver(object sender, DragEventArgs e)
+    {
+        if (_dragFromAssembled is not { } tracks)
+            return;
+        e.AcceptedOperation = DataPackageOperation.Move;
+        e.DragUIOverride.Caption = L.F("editor.drop_remove", tracks.Count);
+    }
+
+    private void PoolList_Drop(object sender, DragEventArgs e)
+    {
+        if (_dragFromAssembled is not { } tracks)
+            return;
+        Remove(tracks);
+        _dragFromAssembled = null;
+    }
+
+    /// the index the drop goes before: the first realized row whose middle is
+    /// below the pointer (the count — after the last row).
+    private static int DropIndex(ListViewBase list, DragEventArgs e)
+    {
+        for (var i = 0; i < list.Items.Count; i++)
+        {
+            if (list.ContainerFromIndex(i) is not FrameworkElement row)
+                continue;
+            if (e.GetPosition(row).Y < row.ActualHeight / 2)
+                return i;
+        }
+        return list.Items.Count;
     }
 }

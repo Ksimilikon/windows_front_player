@@ -3,7 +3,10 @@
 //
 // Tabs:
 // - PLAYLISTS — permanent;
-// - NOW PLAYING — exists while a queue is loaded; closing it stops playback;
+// - NOW PLAYING ("name *") — the playing playlist: exists while a queue is
+//   loaded; closing it stops playback;
+// - a playlist tab ("name") — one playlist, not playing; playing it turns the
+//   tab into NOW PLAYING;
 // - SONG — closes by itself as soon as another tab is selected;
 // - editors, import, export, devices (sync), orphans, settings, log — opened
 //   on demand, closable.
@@ -66,6 +69,7 @@ public sealed partial class ShellView : UserControl
         _p.TrackStarted += OnTrackStarted;
         _p.Stopped += OnStopped;
         _p.Notify += Notify;
+        Covers.Invalidated += OnCoversInvalidated;
 
         SeekSlider.AddHandler(PointerPressedEvent, new PointerEventHandler((_, _) => _seeking = true), true);
         SeekSlider.AddHandler(PointerReleasedEvent, new PointerEventHandler((_, _) => EndSeek()), true);
@@ -83,6 +87,7 @@ public sealed partial class ShellView : UserControl
         _p.TrackStarted -= OnTrackStarted;
         _p.Stopped -= OnStopped;
         _p.Notify -= Notify;
+        Covers.Invalidated -= OnCoversInvalidated;
         foreach (var page in Tabs.TabItems.OfType<TabViewItem>().Select(t => t.Content).OfType<ITabPage>())
             page.OnClosed();
     }
@@ -180,6 +185,26 @@ public sealed partial class ShellView : UserControl
     private int AfterMain() => Find(NowKey) is { } now ? Tabs.TabItems.IndexOf(now) + 1 : 1;
 
     public void OpenNowPlaying() => Open(NowKey, NowHeader(), "", () => new NowPlayingPage(), at: 1);
+
+    /// a tab of one playlist (not playing; selects an open one).
+    public void OpenPlaylist(PlaylistView pl) =>
+        Open(PlaylistPage.KeyOf(pl), pl.DisplayName, "", () => new PlaylistPage(pl), at: AfterMain());
+
+    /// a playlist tab starts playing: it becomes the playing playlist tab in
+    /// place (the previous one, of whatever playlist, goes away — there is
+    /// one queue).
+    public void BecomeNowPlaying(UIElement page)
+    {
+        if (Tabs.TabItems.OfType<TabViewItem>().FirstOrDefault(t => ReferenceEquals(t.Content, page)) is not { } tab)
+            return;
+        if (Find(NowKey) is { } now && now != tab)
+            RemoveTab(now);
+        // a new item in its place: TabView doesn't redraw the selected item
+        // when its Content is swapped.
+        var at = Tabs.TabItems.IndexOf(tab);
+        RemoveTab(tab);
+        Open(NowKey, NowHeader(), "", () => new NowPlayingPage(), at: at);
+    }
 
     /// the song tab: `track` null — follows the playing track.
     public void OpenSong(Track? track = null)
@@ -384,6 +409,8 @@ public sealed partial class ShellView : UserControl
         var result = await worker.Completion;
         if (result.LibraryChanged)
             ReloadLibrary();
+        // pictures written over the old ones (same path) or new cover files.
+        Covers.Invalidate(result.Written);
         if (result.Complete)
             Notify(L.T("msg.sync_done"), LogLevel.Ok);
         else
@@ -464,6 +491,15 @@ public sealed partial class ShellView : UserControl
         SyncProgress();
         SyncVolume();
         _ = SyncCoverAsync(cur);
+    }
+
+    private void OnCoversInvalidated(IReadOnlySet<string> changed)
+    {
+        if (_p.Current?.Track is { } t && changed.Contains(t.Key))
+        {
+            _coverKey = null;
+            _ = SyncCoverAsync(t);
+        }
     }
 
     private async Task SyncCoverAsync(Track? t)

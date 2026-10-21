@@ -1,7 +1,8 @@
 // Packet export / import (the frontend side of `cdc_*`), ported from the TUI
 // EXPORT / IMPORT tabs. The core never writes files itself: on import it hands
-// out the songs / covers, we write them into the target directory (never
-// overwriting — `name (1).ext`, ...) and pass the paths back. Both operations
+// out the songs / covers, we write the songs into the target directory and
+// the covers into the app one (never overwriting — `name (1).ext`, ...) and
+// pass the paths back. Both operations
 // are blocking: run them off the UI thread.
 
 using DreamPlayer.Core;
@@ -49,7 +50,7 @@ public static class Transfer
         {
             ExportMode.Library => CoreApi.Packets.PackLibrary(flags),
             ExportMode.Playlists => CoreApi.Packets.PackPlaylists(playlists, flags),
-            _ => CoreApi.Packets.PackTracks(trackIds, flags with { Covers = false }),
+            _ => CoreApi.Packets.PackTracks(trackIds, flags),
         };
         if (bytes is null)
         {
@@ -72,7 +73,10 @@ public static class Transfer
 
     // ───────────────────────── import ─────────────────────────
 
-    public static ImportResult Import(string packet, string saveTo, bool force, Report report)
+    /// `written` gets the paths of the files written by a successful import
+    /// (the covers to refresh on screen).
+    public static ImportResult Import(string packet, string saveTo, bool force, Report report,
+        ICollection<string>? written = null)
     {
         if (Directory.Exists(packet))
         {
@@ -111,33 +115,35 @@ public static class Transfer
             var songs = session.Files.Count(f => f.Kind == ImportFileKind.Song);
             var covers = session.Files.Count - songs;
             Log(report, L.F("import.to_write", songs, covers, saveTo), LogLevel.Info);
-            var written = new List<string>(session.Files.Count);
+            var paths = new List<string>(session.Files.Count);
             foreach (var f in session.Files)
             {
                 try
                 {
                     string path;
                     using (var data = f.OpenRead())
-                        path = WriteUnique(saveTo, f.Name, data);
-                    written.Add(path);
+                        path = WriteUnique(TargetDir(f.Kind, saveTo), f.Name, data);
+                    paths.Add(path);
                     CoreLog.Debug("import", $"wrote {f.Kind} {Format.Size(f.Length)} → {path}");
                 }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                 {
                     Log(report, L.F("import.write_failed", f.Name, e.Message), LogLevel.Error);
-                    RemoveAll(written);
+                    RemoveAll(paths);
                     return ImportResult.Failed; // the session is cancelled by Dispose
                 }
             }
 
             // step 3: the core saves the paths.
-            st = session.Commit(written);
+            st = session.Commit(paths);
             if (st == CdcStatus.Ok)
             {
+                foreach (var p in paths)
+                    written?.Add(p);
                 Log(report, L.F("import.done", songs, covers), LogLevel.Ok);
                 return ImportResult.Ok;
             }
-            RemoveAll(written);
+            RemoveAll(paths);
             if (st == CdcStatus.Outdated)
             {
                 Log(report, L.T("import.changed_meanwhile"), LogLevel.Warn);
@@ -147,6 +153,11 @@ public static class Transfer
             return ImportResult.Failed;
         }
     }
+
+    /// where a received file goes: songs — into the chosen folder, covers that
+    /// are files of their own — into the app folder (`App.CoversDir`).
+    public static string TargetDir(ImportFileKind kind, string saveTo) =>
+        kind == ImportFileKind.Song ? saveTo : App.CoversDir;
 
     /// writes the file into `dir` without overwriting: if the name is taken —
     /// `name (1).ext`, `name (2).ext`, ...

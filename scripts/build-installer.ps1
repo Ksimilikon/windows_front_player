@@ -22,7 +22,7 @@ $project = Join-Path $root "DreamPlayer\DreamPlayer.csproj"
 
 if (-not $Version) {
     $Version = ([xml](Get-Content -Raw $project)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
-    if (-not $Version) { $Version = "0.2" }
+    if (-not $Version) { $Version = "0.21" }
 }
 
 $iscc = @(

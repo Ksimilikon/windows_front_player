@@ -1,6 +1,7 @@
-// NOW PLAYING tab: the player queue. Drag-n-drop reorders it (temporary), the
-// warning bar offers to write the order to the db or revert it. While a
-// search is active the list shows a filtered copy and reordering is off.
+// NOW PLAYING tab: the player queue. Drag-n-drop reorders it (temporary);
+// while the order differs from the db one the header shows "save order" and
+// "revert". While a search is active the list shows a filtered copy and
+// reordering is off.
 
 using System.ComponentModel;
 using DreamPlayer.Services;
@@ -55,9 +56,9 @@ public sealed partial class NowPlayingPage : UserControl, ITabPage
         InfoText.Text = $"{L.F("lib.tracks_count", _p.Queue.Count)} · {Core.Format.Duration(total)}"
             + (_p.FromPool ? $" · {L.T("now.pool_hint")}" : "");
         EditButton.IsEnabled = !_p.FromPool;
-        DirtyBar.Visibility = Ui.Visible(_p.OrderDirty);
-        SaveOrderButton.IsEnabled = !_p.FromPool;
-        DirtyText.Text = _p.FromPool ? L.T("now.dirty_pool") : L.T("now.dirty");
+        // "All songs" has no order to save: only revert.
+        RevertButton.Visibility = Ui.Visible(_p.OrderDirty);
+        SaveOrderButton.Visibility = Ui.Visible(_p.OrderDirty && !_p.FromPool);
     }
 
     private void ApplyFilter()

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The tracks of one playlist with its actions, search and sorting: the
+     right pane of PLAYLISTS and the whole of a playlist tab. -->
+<UserControl
+    x:Class="DreamPlayer.Views.PlaylistTracksView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DreamPlayer"
+    xmlns:views="using:DreamPlayer.Views"
+    xmlns:core="using:DreamPlayer.Core">
+
+    <Border Style="{StaticResource DpPane}">
+        <Grid RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <views:CoverThumb x:Name="HeaderCover" Width="64" Height="64" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="PlaylistTitle" FontSize="22" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="PlaylistInfo" Style="{StaticResource DpMuted}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <Button x:Name="PlayButton" Style="{StaticResource AccentButtonStyle}" Click="Play_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE768;" FontSize="14" />
+                            <TextBlock Text="{x:Bind local:L.T('playlists.play')}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ShuffleButton" Style="{StaticResource DpIconButton}" Click="ShufflePlay_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.shuffle_play')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.shuffle_play')}">
+                        <FontIcon Glyph="&#xE8B1;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="OpenTabButton" Style="{StaticResource DpIconButton}" Click="OpenTab_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.open_tab')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.open_tab')}">
+                        <FontIcon Glyph="&#xE8A7;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="EditButton" Style="{StaticResource DpIconButton}" Click="Edit_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.edit')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.edit')}">
+                        <FontIcon Glyph="&#xE70F;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="ExportButton" Style="{StaticResource DpIconButton}" Click="Export_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.export')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.export')}">
+                        <FontIcon Glyph="&#xEDE1;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="DeleteButton" Style="{StaticResource DpIconButton}" Click="Delete_Click" ToolTipService.ToolTip="{x:Bind local:L.T('playlists.delete')}" AutomationProperties.Name="{x:Bind local:L.T('playlists.delete')}">
+                        <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="{StaticResource DpError}" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="TrackSearch" PlaceholderText="{x:Bind local:L.T('common.search_tracks')}" TextChanged="TrackSearch_TextChanged" />
+                <ComboBox x:Name="SortBox" Grid.Column="1" MinWidth="150" SelectionChanged="Sort_Changed" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort')}" AutomationProperties.Name="{x:Bind local:L.T('common.sort')}" />
+                <ToggleButton x:Name="SortDesc" Grid.Column="2" Style="{StaticResource DpIconToggle}" Click="SortDesc_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.sort_desc')}" AutomationProperties.Name="{x:Bind local:L.T('common.sort_desc')}">
+                    <FontIcon Glyph="&#xE8CB;" FontSize="14" />
+                </ToggleButton>
+            </Grid>
+
+            <!-- column headers -->
+            <Grid Grid.Row="2" Padding="16,0,16,0" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="4" />
+                    <ColumnDefinition Width="36" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="56" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="2" Text="{x:Bind local:L.T('col.title')}" Style="{StaticResource DpMuted}" />
+                <TextBlock Grid.Column="3" Text="{x:Bind local:L.T('col.album')}" Style="{StaticResource DpMuted}" />
+                <TextBlock Grid.Column="4" Text="{x:Bind local:L.T('col.time')}" Style="{StaticResource DpMuted}" HorizontalAlignment="Right" />
+            </Grid>
+
+            <ListView
+                x:Name="TrackList"
+                Grid.Row="3"
+                SelectionMode="Extended"
+                DoubleTapped="TrackList_DoubleTapped"
+                ContextRequested="TrackList_ContextRequested"
+                KeyDown="TrackList_KeyDown">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="core:Track">
+                        <Grid Padding="0,4" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4" />
+                                <ColumnDefinition Width="36" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="200" />
+                                <ColumnDefinition Width="56" />
+                            </Grid.ColumnDefinitions>
+                            <Border CornerRadius="2" Background="{x:Bind views:Ui.ColorBrush(Color)}" />
+                            <views:CoverThumb Grid.Column="1" Width="36" Height="36" Track="{x:Bind}" />
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Invalid)}" />
+                                <TextBlock Text="{x:Bind ArtistsLine}" Style="{StaticResource DpMuted}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="3" Text="{x:Bind views:Ui.Dash(Album)}" VerticalAlignment="Center" Style="{StaticResource DpMuted}" />
+                            <TextBlock Grid.Column="4" Text="{x:Bind DurationText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <TextBlock
+                x:Name="EmptyText"
+                Grid.Row="3"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Style="{StaticResource DpMuted}"
+                FontSize="14" />
+        </Grid>
+    </Border>
+</UserControl>

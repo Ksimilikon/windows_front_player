@@ -23,6 +23,9 @@ public partial class App : Application
 
     public static string DataDir => Path.Combine(LocalDir, "data");
     public static string CacheDir => Path.Combine(LocalDir, "cache");
+    /// received covers that are files of their own (not embedded into the
+    /// audio): song covers and playlist covers from imports and syncs.
+    public static string CoversDir => Path.Combine(LocalDir, "covers");
 
     /// the core init status (`null` — the core library failed to load at all).
     public static InitStatus? CoreStatus { get; private set; }

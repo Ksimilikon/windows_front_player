@@ -49,9 +49,10 @@ public sealed partial class ImportPage : UserControl, ITabPage
         RunButton.IsEnabled = false;
         Progress.IsActive = true;
         ImportResult result;
+        var written = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            result = await CoreApi.RunLong(() => Transfer.Import(packet, saveTo, force, Report));
+            result = await CoreApi.RunLong(() => Transfer.Import(packet, saveTo, force, Report, written));
         }
         finally
         {
@@ -63,6 +64,7 @@ public sealed partial class ImportPage : UserControl, ITabPage
         {
             case ImportResult.Ok:
                 ShellView.Current?.ReloadLibrary();
+                Covers.Invalidate(written);
                 ShellView.Current?.Notify(L.T("msg.import_done"), LogLevel.Ok);
                 break;
             case ImportResult.Outdated when !force:

@@ -97,7 +97,6 @@ public sealed partial class ExportPage : UserControl, ITabPage
         Search.IsEnabled = !library;
         AllButton.IsEnabled = !library;
         NoneButton.IsEnabled = !library;
-        CoversSwitch.IsEnabled = Mode != ExportMode.Tracks;
         LibraryText.Text = library
             ? L.F("export.library_info", Library.Instance.Pool.Count, Library.Instance.Playlists.Count - 1)
             : "";
@@ -139,8 +138,8 @@ public sealed partial class ExportPage : UserControl, ITabPage
             Report(L.T("export.nothing_selected"), LogLevel.Warn);
             return null;
         }
-        // no playlists — no covers (the switch is disabled then).
-        var flags = new PackFlags(AudioSwitch.IsOn, NamesSwitch.IsOn, CoversSwitch.IsOn && mode != ExportMode.Tracks);
+        // tracks too: their covers that are files of their own (v0.12).
+        var flags = new PackFlags(AudioSwitch.IsOn, NamesSwitch.IsOn, CoversSwitch.IsOn);
         AppSettings.Current.ExportAudio = AudioSwitch.IsOn;
         AppSettings.Current.ExportNames = NamesSwitch.IsOn;
         AppSettings.Current.ExportCovers = CoversSwitch.IsOn;

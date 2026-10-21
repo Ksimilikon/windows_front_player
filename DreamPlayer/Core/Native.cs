@@ -99,7 +99,10 @@ public enum CdcStatus : uint
 public enum ImportFileKind : uint
 {
     Song = 1,
+    /// playlist cover.
     Cover = 2,
+    /// song cover not embedded into the audio file (v0.12+).
+    SongCover = 3,
 }
 
 public enum ConStatus : uint
@@ -433,6 +436,9 @@ internal static unsafe partial class Native
     [LibraryImport(Lib, EntryPoint = "idx_set_track_cover", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial IdxStatus IdxSetTrackCover(long id, string? coverPath);
 
+    [LibraryImport(Lib, EntryPoint = "idx_embed_track_cover", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial IdxStatus IdxEmbedTrackCover(long id, string imagePath);
+
     [LibraryImport(Lib, EntryPoint = "idx_set_track_color", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial IdxStatus IdxSetTrackColor(long id, string? color);
 
@@ -496,6 +502,7 @@ internal static unsafe partial class Native
     internal static partial CdcStatus CdcPackTracks(uint version, long* ids, nuint idsLen,
         [MarshalAs(UnmanagedType.U1)] bool withAudio,
         [MarshalAs(UnmanagedType.U1)] bool withNames,
+        [MarshalAs(UnmanagedType.U1)] bool withCovers,
         out nint outPtr, out nuint outLen);
 
     [LibraryImport(Lib, EntryPoint = "cdc_pack_playlists")]

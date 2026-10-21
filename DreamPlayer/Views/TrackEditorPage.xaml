@@ -52,7 +52,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBox x:Name="CoverBox" Header="{x:Bind local:L.T('meta.cover')}" PlaceholderText="{x:Bind local:L.T('meta.cover_embedded')}" />
+                    <TextBox x:Name="CoverBox" Header="{x:Bind local:L.T('meta.cover')}" PlaceholderText="{x:Bind local:L.T('meta.cover_embedded')}" TextChanged="CoverBox_TextChanged" />
                     <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseCover_Click" ToolTipService.ToolTip="{x:Bind local:L.T('common.browse')}" AutomationProperties.Name="{x:Bind local:L.T('common.browse')}">
                         <FontIcon Glyph="&#xE8E5;" FontSize="14" />
                     </Button>
@@ -60,6 +60,8 @@
                         <FontIcon Glyph="&#xE711;" FontSize="14" />
                     </Button>
                 </Grid>
+
+                <CheckBox x:Name="EmbedBox" Margin="0,-8,0,0" Content="{x:Bind local:L.T('editor.embed_cover')}" ToolTipService.ToolTip="{x:Bind local:L.T('editor.embed_cover_hint')}" />
 
                 <!-- file path (after the file was moved / renamed on disk) -->
                 <Grid ColumnSpacing="4">

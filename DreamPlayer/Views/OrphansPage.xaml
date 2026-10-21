@@ -82,10 +82,17 @@
                                 <ColumnDefinition Width="56" />
                             </Grid.ColumnDefinitions>
                             <Border CornerRadius="2" Background="{x:Bind views:Ui.ColorBrush(Color)}" />
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Invalid)}" />
-                                <TextBlock Text="{x:Bind ArtistsLine}" Style="{StaticResource DpMuted}" />
-                            </StackPanel>
+                            <Grid Grid.Column="1" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <views:CoverThumb Width="36" Height="36" Track="{x:Bind}" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" Foreground="{x:Bind views:Ui.TitleBrush(Invalid)}" />
+                                    <TextBlock Text="{x:Bind ArtistsLine}" Style="{StaticResource DpMuted}" />
+                                </StackPanel>
+                            </Grid>
                             <TextBlock
                                 Grid.Column="2"
                                 Text="{x:Bind views:Ui.Dash(Path)}"

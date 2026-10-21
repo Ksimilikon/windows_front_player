@@ -12,9 +12,9 @@ namespace DreamPlayer.Core;
 
 public static unsafe class CoreApi
 {
-    /// packet format version the frontend writes (`codec::Version::V0_11`:
-    /// a library packet also carries deleted playlists).
-    public const uint PacketVersion = 2;
+    /// packet format version the frontend writes (`codec::Version::V0_12`:
+    /// deleted playlists; songs with their dates, db metadata and covers).
+    public const uint PacketVersion = 3;
 
     private static ulong _panics;
     private static int _busy;
@@ -293,14 +293,14 @@ public static unsafe class CoreApi
         }
 
         /// cover bytes to display (cover file or the embedded one); `null` —
-        /// no cover or an error.
-        public static byte[]? Cover(Track t)
+        /// no cover or an error. `quiet` — list thumbnails (one call per row).
+        public static byte[]? Cover(Track t, bool quiet = false)
         {
             nint p = 0;
             nuint len = 0;
             var id = t.Id ?? 0;
             var path = t.Id is null ? t.Path : null;
-            var st = Run(A, $"idx_get_track_cover({id}, {Q(path)})", () => Native.IdxGetTrackCover(id, path, out p, out len));
+            var st = Run(A, $"idx_get_track_cover({id}, {Q(path)})", () => Native.IdxGetTrackCover(id, path, out p, out len), quiet);
             if (st != IdxStatus.Ok || p == 0)
                 return null;
             var bytes = new ReadOnlySpan<byte>((void*)p, checked((int)len)).ToArray();
@@ -335,6 +335,12 @@ public static unsafe class CoreApi
 
         public static IdxStatus SetCover(long id, string? path) =>
             Run(A, $"idx_set_track_cover({id}, {Q(path)})", () => Native.IdxSetTrackCover(id, path));
+
+        /// writes the picture (png / jpg) into the tags of the track's audio
+        /// file as the front cover; the core dates the file as changed, so it
+        /// syncs again. The separate cover file of the track stays as it is.
+        public static IdxStatus EmbedCover(long id, string imagePath) =>
+            Run(A, $"idx_embed_track_cover({id}, {Q(imagePath)})", () => Native.IdxEmbedTrackCover(id, imagePath));
 
         public static IdxStatus SetColor(long id, string? color) =>
             Run(A, $"idx_set_track_color({id}, {Q(color)})", () => Native.IdxSetTrackColor(id, color));
@@ -411,8 +417,8 @@ public static unsafe class CoreApi
             fixed (long* ptr = arr)
             {
                 var idsPtr = ptr;
-                st = Run(A, $"cdc_pack_tracks(v{PacketVersion}, {arr.Length} id(s), audio={f.Audio}, names={f.Names})",
-                    () => Native.CdcPackTracks(PacketVersion, idsPtr, (nuint)arr.Length, f.Audio, f.Names, out p, out len));
+                st = Run(A, $"cdc_pack_tracks(v{PacketVersion}, {arr.Length} id(s), audio={f.Audio}, names={f.Names}, covers={f.Covers})",
+                    () => Native.CdcPackTracks(PacketVersion, idsPtr, (nuint)arr.Length, f.Audio, f.Names, f.Covers, out p, out len));
             }
             return (st, TakeBytes(st, p, len));
         }

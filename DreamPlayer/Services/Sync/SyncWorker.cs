@@ -3,8 +3,9 @@
 // (`sync_*`), then carries bytes between them until the session is over. The
 // protocol itself — pairing, comparing libraries, confirmations — lives in
 // the core; the worker only moves bytes and writes the received files: a song
-// over the local file with the same name, anything else into the target
-// folder (never overwriting).
+// over the local file it replaces, a new song into the target folder, a cover
+// (song or playlist, a file of its own) into the app folder — the last two
+// never overwriting.
 //
 // One worker at a time (a second one would fight over the port / device).
 // Progress goes to `report` from a background thread.
@@ -15,8 +16,9 @@ using DreamPlayer.Core;
 namespace DreamPlayer.Services.Sync;
 
 /// `Complete` — the session went through to `Done`; `LibraryChanged` —
-/// received data was saved (the library has to be re-read).
-public readonly record struct SyncResult(bool Complete, bool LibraryChanged);
+/// received data was saved (the library has to be re-read); `Written` — the
+/// files written meanwhile (songs and covers: their pictures may have changed).
+public readonly record struct SyncResult(bool Complete, bool LibraryChanged, IReadOnlySet<string> Written);
 
 public sealed class SyncWorker
 {
@@ -30,11 +32,13 @@ public sealed class SyncWorker
 
     private readonly CancellationTokenSource _cancel = new();
     private readonly Report _report;
+    private readonly HashSet<string> _written = new(StringComparer.OrdinalIgnoreCase);
     private bool _changed;
 
     private SyncWorker(Report report) => _report = report;
 
-    public Task<SyncResult> Completion { get; private set; } = Task.FromResult(default(SyncResult));
+    public Task<SyncResult> Completion { get; private set; } =
+        Task.FromResult(new SyncResult(false, false, new HashSet<string>()));
 
     public bool Running => !Completion.IsCompleted;
 
@@ -80,7 +84,7 @@ public sealed class SyncWorker
             if (st != ConStatus.Ok)
             {
                 Log(L.F("sync.failed_open", CoreApi.Describe(st)), LogLevel.Error);
-                return new SyncResult(false, false);
+                return new SyncResult(false, false, _written);
             }
             try
             {
@@ -100,7 +104,7 @@ public sealed class SyncWorker
         {
             Log(L.F("sync.connection_error", e.Message), LogLevel.Error);
         }
-        return new SyncResult(complete, _changed);
+        return new SyncResult(complete, _changed, _written);
     }
 
     /// brings the transport up; a cancellation returns at once even if the
@@ -285,10 +289,11 @@ public sealed class SyncWorker
                 }
                 else
                 {
-                    path = Transfer.WriteUnique(saveTo, f.Name, data);
+                    path = Transfer.WriteUnique(Transfer.TargetDir(f.Kind, saveTo), f.Name, data);
                 }
                 CoreLog.Debug(A, $"wrote {f.Kind} {Format.Size(f.Length)} → {path}");
                 paths.Add(path);
+                _written.Add(path);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {

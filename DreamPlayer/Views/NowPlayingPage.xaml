@@ -14,7 +14,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -28,6 +27,16 @@
                     <TextBlock x:Name="InfoText" Style="{StaticResource DpMuted}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <!-- the order differs from the db one -->
+                    <Button x:Name="RevertButton" Click="Revert_Click" Style="{StaticResource DpIconButton}" Visibility="Collapsed" ToolTipService.ToolTip="{x:Bind local:L.T('now.revert')}" AutomationProperties.Name="{x:Bind local:L.T('now.revert')}">
+                        <FontIcon Glyph="&#xE7A7;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="SaveOrderButton" Click="SaveOrder_Click" Style="{StaticResource AccentButtonStyle}" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                            <TextBlock Text="{x:Bind local:L.T('now.save_order')}" />
+                        </StackPanel>
+                    </Button>
                     <Button Click="ScrollToCurrent_Click" Style="{StaticResource DpIconButton}" ToolTipService.ToolTip="{x:Bind local:L.T('now.to_current')}" AutomationProperties.Name="{x:Bind local:L.T('now.to_current')}">
                         <FontIcon Glyph="&#xE81D;" FontSize="14" />
                     </Button>
@@ -37,33 +46,11 @@
                 </StackPanel>
             </Grid>
 
-            <!-- the order differs from the db one -->
-            <Border
-                x:Name="DirtyBar"
-                Grid.Row="1"
-                Padding="12,8"
-                CornerRadius="6"
-                Background="#3A3112"
-                Visibility="Collapsed">
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <FontIcon Glyph="&#xE7BA;" FontSize="14" Foreground="{StaticResource DpWarning}" />
-                    <TextBlock x:Name="DirtyText" Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource DpWarning}" TextWrapping="Wrap" />
-                    <Button Grid.Column="2" Content="{x:Bind local:L.T('now.revert')}" Click="Revert_Click" />
-                    <Button x:Name="SaveOrderButton" Grid.Column="3" Style="{StaticResource AccentButtonStyle}" Content="{x:Bind local:L.T('now.save_order')}" Click="SaveOrder_Click" />
-                </Grid>
-            </Border>
-
-            <TextBox x:Name="Search" Grid.Row="2" PlaceholderText="{x:Bind local:L.T('now.search')}" TextChanged="Search_TextChanged" />
+            <TextBox x:Name="Search" Grid.Row="1" PlaceholderText="{x:Bind local:L.T('now.search')}" TextChanged="Search_TextChanged" />
 
             <ListView
                 x:Name="Queue"
-                Grid.Row="3"
+                Grid.Row="2"
                 SelectionMode="Extended"
                 CanReorderItems="True"
                 CanDragItems="True"
@@ -77,6 +64,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="36" />
                                 <ColumnDefinition Width="4" />
+                                <ColumnDefinition Width="36" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="200" />
                                 <ColumnDefinition Width="56" />
@@ -96,7 +84,8 @@
                                     Visibility="{x:Bind IsCurrent, Mode=OneWay}" />
                             </Grid>
                             <Border Grid.Column="1" CornerRadius="2" Background="{x:Bind views:Ui.ColorBrush(Track.Color), Mode=OneWay}" />
-                            <StackPanel Grid.Column="2">
+                            <views:CoverThumb Grid.Column="2" Width="36" Height="36" Track="{x:Bind Track, Mode=OneWay}" />
+                            <StackPanel Grid.Column="3" VerticalAlignment="Center">
                                 <TextBlock
                                     Text="{x:Bind Track.Title, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis"
@@ -104,8 +93,8 @@
                                     Foreground="{x:Bind views:Ui.PlayingBrush(IsCurrent), Mode=OneWay}" />
                                 <TextBlock Text="{x:Bind Track.ArtistsLine, Mode=OneWay}" Style="{StaticResource DpMuted}" />
                             </StackPanel>
-                            <TextBlock Grid.Column="3" Text="{x:Bind views:Ui.Dash(Track.Album), Mode=OneWay}" VerticalAlignment="Center" Style="{StaticResource DpMuted}" />
-                            <TextBlock Grid.Column="4" Text="{x:Bind Track.DurationText, Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
+                            <TextBlock Grid.Column="4" Text="{x:Bind views:Ui.Dash(Track.Album), Mode=OneWay}" VerticalAlignment="Center" Style="{StaticResource DpMuted}" />
+                            <TextBlock Grid.Column="5" Text="{x:Bind Track.DurationText, Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DpMuted}" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
