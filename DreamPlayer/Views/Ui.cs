@@ -139,17 +139,37 @@ public static class Ui
 
     // ── context menus ──
 
-    /// a context menu row; `null` in a list is a separator.
-    public sealed record Item(string Text, string Glyph, Action Action, bool Enabled = true, bool Destructive = false);
+    /// a context menu row; `null` in a list is a separator. With `Sub` the
+    /// row is a submenu of those rows (`Action` is not used).
+    public sealed record Item(string Text, string Glyph, Action Action, bool Enabled = true, bool Destructive = false,
+        IReadOnlyList<Item?>? Sub = null);
 
     public static MenuFlyout Menu(params Item?[] items)
     {
         var menu = new MenuFlyout();
+        AddRows(menu.Items, items);
+        return menu;
+    }
+
+    private static void AddRows(IList<MenuFlyoutItemBase> rows, IEnumerable<Item?> items)
+    {
         foreach (var item in items)
         {
             if (item is null)
             {
-                menu.Items.Add(new MenuFlyoutSeparator());
+                rows.Add(new MenuFlyoutSeparator());
+                continue;
+            }
+            if (item.Sub is { } sub)
+            {
+                var group = new MenuFlyoutSubItem
+                {
+                    Text = item.Text,
+                    Icon = new FontIcon { Glyph = item.Glyph },
+                    IsEnabled = item.Enabled,
+                };
+                AddRows(group.Items, sub);
+                rows.Add(group);
                 continue;
             }
             var row = new MenuFlyoutItem
@@ -162,9 +182,8 @@ public static class Ui
                 row.Foreground = Error;
             var action = item.Action;
             row.Click += (_, _) => action();
-            menu.Items.Add(row);
+            rows.Add(row);
         }
-        return menu;
     }
 
     /// the data item a context request came from (the row's DataContext).

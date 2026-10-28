@@ -239,6 +239,7 @@ public sealed partial class PlaylistTracksView : UserControl
             new(L.T("track.edit_meta"), "", () => ShellView.Current?.OpenTrackEditor(t), !many && t.Id is not null),
             new(L.T("track.show_in_folder"), "", () => Ui.ShowInFolder(t.Path), !many && t.Path is not null),
             new(L.T("track.export"), "", () => ShellView.Current?.OpenExport(ExportMode.Tracks, null, selected.Select(x => x.Id).OfType<long>())),
+            ShellView.Current?.AddToPlaylistItem(selected, pl.IsPool ? null : pl.Name),
             null,
             new(many ? L.F("track.remove_from_playlist_n", selected.Count) : L.T("track.remove_from_playlist"),
                 "", () => RemoveFromPlaylist(pl, selected), !pl.IsPool, Destructive: true),

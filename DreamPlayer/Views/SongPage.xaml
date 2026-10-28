@@ -76,6 +76,9 @@
                     <Button x:Name="FolderButton" Click="Folder_Click" ToolTipService.ToolTip="{x:Bind local:L.T('track.show_in_folder')}" AutomationProperties.Name="{x:Bind local:L.T('track.show_in_folder')}">
                         <FontIcon Glyph="&#xE838;" FontSize="14" />
                     </Button>
+                    <Button x:Name="AddToPlaylistButton" Click="AddToPlaylist_Click" ToolTipService.ToolTip="{x:Bind local:L.T('track.add_to_playlist')}" AutomationProperties.Name="{x:Bind local:L.T('track.add_to_playlist')}">
+                        <FontIcon Glyph="&#xECC8;" FontSize="14" />
+                    </Button>
                 </StackPanel>
                 <!-- key / value rows, filled in code -->
                 <Grid x:Name="MetaGrid" ColumnSpacing="16" RowSpacing="6">

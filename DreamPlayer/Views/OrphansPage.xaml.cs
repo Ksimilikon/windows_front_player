@@ -155,8 +155,9 @@ public sealed partial class OrphansPage : UserControl, ITabPage
             new(L.T("track.open_song"), "", () => ShellView.Current?.OpenSong(t)),
             new(L.T("track.edit_meta"), "", () => ShellView.Current?.OpenTrackEditor(t), !many && t.Id is not null),
             new(L.T("track.show_in_folder"), "", () => Ui.ShowInFolder(t.Path), !many && t.Path is not null),
+            ShellView.Current?.AddToPlaylistItem(selected),
             null,
-            new(L.T(unkeep ? "orphans.unkeep" : "orphans.keep"), unkeep ? "" : "", () => SetKeep(selected, !unkeep)),
+            new(L.T(unkeep ? "orphans.unkeep" : "orphans.keep"),unkeep ? "" : "", () => SetKeep(selected, !unkeep)),
             null,
             new(many ? L.F("track.delete_from_device_n", selected.Count) : L.T("track.delete_from_device"),
                 "", () => Delete(selected), Destructive: true)), TrackList, e);

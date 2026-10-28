@@ -12,9 +12,13 @@ namespace DreamPlayer.Core;
 
 public static unsafe class CoreApi
 {
-    /// packet format version the frontend writes (`codec::Version::V0_12`:
-    /// deleted playlists; songs with their dates, db metadata and covers).
-    public const uint PacketVersion = 3;
+    /// packet format version the frontend writes (`codec::Version::V0_13`:
+    /// deleted playlists; songs with their dates, db metadata and covers;
+    /// playlist entry ids and removed entries, so an import merges playlists).
+    public const uint PacketVersion = 4;
+
+    /// a non-null pointer for an empty C string array (0 elements are read).
+    private static readonly nint* EmptyList = (nint*)NativeMemory.AllocZeroed((nuint)sizeof(nint));
 
     private static ulong _panics;
     private static int _busy;
@@ -312,25 +316,21 @@ public static unsafe class CoreApi
         public static IdxStatus IndexDir(string? dir) =>
             Run(A, $"idx_index_dir({Q(dir)})", () => Native.IdxIndexDir(dir));
 
-        /// `title`/`artists` null — leave as is.
-        public static IdxStatus SetMeta(long id, string? title, IReadOnlyList<string>? artists)
+        /// writes the tags into the audio file of the track, then into the db
+        /// (the file is dated as changed). A null field — leave as is; lists
+        /// are rewritten entirely (empty — clear), an empty album clears it.
+        /// `WriteFailed` — the file couldn't be written, the db is unchanged.
+        public static IdxStatus SetMeta(long id, string? title, IReadOnlyList<string>? artists,
+            string? album, IReadOnlyList<string>? genres)
         {
-            if (artists is null)
-                return Run(A, $"idx_set_track_meta({id}, {Q(title)}, null)",
-                    () => Native.IdxSetTrackMeta(id, title, null, 0));
-            using var arr = new Utf8Array(artists);
-            return Run(A, $"idx_set_track_meta({id}, {Q(title)}, [{string.Join(", ", artists)}])",
-                () => Native.IdxSetTrackMeta(id, title, arr.Ptr, arr.Len));
-        }
+            using var a = artists is null ? null : new Utf8Array(artists);
+            using var g = genres is null ? null : new Utf8Array(genres);
+            return Run(A, $"idx_set_track_meta({id}, {Q(title)}, {List(artists)}, {Q(album)}, {List(genres)})",
+                () => Native.IdxSetTrackMeta(id, title, Ptr(a), a?.Len ?? 0, album, Ptr(g), g?.Len ?? 0));
 
-        public static IdxStatus SetAlbum(long id, string? album) =>
-            Run(A, $"idx_set_track_album({id}, {Q(album)})", () => Native.IdxSetTrackAlbum(id, album));
-
-        public static IdxStatus SetGenres(long id, IReadOnlyList<string> genres)
-        {
-            using var arr = new Utf8Array(genres);
-            return Run(A, $"idx_set_track_genres({id}, [{string.Join(", ", genres)}])",
-                () => Native.IdxSetTrackGenres(id, arr.Ptr, arr.Len));
+            static string List(IReadOnlyList<string>? l) => l is null ? "null" : $"[{string.Join(", ", l)}]";
+            // null — leave the list as is, so an empty one (clear) still needs a pointer.
+            static nint* Ptr(Utf8Array? arr) => arr is null ? null : arr.Len == 0 ? EmptyList : arr.Ptr;
         }
 
         public static IdxStatus SetCover(long id, string? path) =>

@@ -112,28 +112,6 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
         }
 
         var results = new List<IdxStatus>();
-        var artists = Ui.SplitList(ArtistsBox.Text);
-        var titleChanged = title != _t.Title;
-        var artistsChanged = !artists.SequenceEqual(_t.Artists);
-        if (titleChanged || artistsChanged)
-            results.Add(CoreApi.Library.SetMeta(id, titleChanged ? title : null, artistsChanged ? artists : null));
-
-        var album = AlbumBox.Text.Trim();
-        if (album != (_t.Album ?? ""))
-            results.Add(CoreApi.Library.SetAlbum(id, Null(album)));
-
-        var genres = Ui.SplitList(GenresBox.Text);
-        if (!genres.SequenceEqual(_t.Genres))
-            results.Add(CoreApi.Library.SetGenres(id, genres));
-
-        var label = LabelBox.Text.Trim();
-        if (label != (_t.Label ?? ""))
-            results.Add(CoreApi.Library.SetLabel(id, Null(label)));
-
-        var hex = color.Length > 0 ? Ui.ToHex(Ui.ParseColor(color)!.Value) : "";
-        if (!string.Equals(hex, _t.Color ?? "", StringComparison.OrdinalIgnoreCase))
-            results.Add(CoreApi.Library.SetColor(id, Null(hex)));
-
         var path = PathBox.Text.Trim();
         if (path.Length > 0 && path != (_t.Path ?? ""))
         {
@@ -142,6 +120,31 @@ public sealed partial class TrackEditorPage : UserControl, ITabPage
             results.Add(CoreApi.Library.SetPath(id, path));
             Covers.Forget(_t);
         }
+
+        // after the path: the tags go into the file the db points at, in one
+        // write (null — unchanged).
+        var artists = Ui.SplitList(ArtistsBox.Text);
+        var album = AlbumBox.Text.Trim();
+        var genres = Ui.SplitList(GenresBox.Text);
+        var newTitle = title != _t.Title ? title : null;
+        var newArtists = artists.SequenceEqual(_t.Artists) ? null : artists;
+        var newAlbum = album != (_t.Album ?? "") ? album : null;
+        var newGenres = genres.SequenceEqual(_t.Genres) ? null : genres;
+        if (newTitle is not null || newArtists is not null || newAlbum is not null || newGenres is not null)
+        {
+            var st = CoreApi.Library.SetMeta(id, newTitle, newArtists, newAlbum, newGenres);
+            results.Add(st);
+            if (st == IdxStatus.WriteFailed)
+                ShellView.Current?.Notify(L.T("msg.tags_write_failed"), LogLevel.Error);
+        }
+
+        var label = LabelBox.Text.Trim();
+        if (label != (_t.Label ?? ""))
+            results.Add(CoreApi.Library.SetLabel(id, Null(label)));
+
+        var hex = color.Length > 0 ? Ui.ToHex(Ui.ParseColor(color)!.Value) : "";
+        if (!string.Equals(hex, _t.Color ?? "", StringComparison.OrdinalIgnoreCase))
+            results.Add(CoreApi.Library.SetColor(id, Null(hex)));
 
         // after the path: the picture goes into the file the db points at.
         var cover = CoverBox.Text.Trim();

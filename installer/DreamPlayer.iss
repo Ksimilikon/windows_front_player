@@ -1,11 +1,11 @@
 ; Dream Player installer (Inno Setup 6). Built by scripts\build-installer.ps1,
 ; which publishes the app self-contained and passes:
-;   /DAppVersion=0.21  /DPublishDir=<dotnet publish output>  /O<output dir>
+;   /DAppVersion=0.22  /DPublishDir=<dotnet publish output>  /O<output dir>
 ; Installs per user by default (no admin); the setup offers "for all users".
 ; The library and settings (%LOCALAPPDATA%\DreamPlayer) are left on uninstall.
 
 #ifndef AppVersion
-  #define AppVersion "0.21"
+  #define AppVersion "0.22"
 #endif
 #ifndef PublishDir
   #error PublishDir is not defined: build with scripts\build-installer.ps1

@@ -168,11 +168,11 @@ public static class L
 
         // import
         ["import.title"] = "Import a packet",
-        ["import.hint"] = "New songs from the packet are written to the target folder, covers that are files of their own — to the app folder (existing files are never overwritten); then everything is added to the library. Playlists are matched by name.",
+        ["import.hint"] = "New songs from the packet are written to the target folder, covers that are files of their own — to the app folder (existing files are never overwritten); then everything is added to the library. Playlists are matched by name and merged with the local ones song by song.",
         ["import.packet"] = "Packet file",
         ["import.save_to"] = "Write new files to",
         ["import.force"] = "Force",
-        ["import.force_hint"] = "Apply even if local playlists are newer than the packet.",
+        ["import.force_hint"] = "Bring back playlists that were deleted here after they changed in the packet.",
         ["import.run"] = "Import",
         ["import.ready"] = "Choose a packet file and the target folder.",
         ["import.is_dir"] = "The packet path is a folder: {0}",
@@ -341,7 +341,7 @@ public static class L
         ["st.IdxStatus.NoDatabase"] = "the core runs without a database",
         ["st.IdxStatus.NotFound"] = "not found in the library",
         ["st.IdxStatus.ReadFailed"] = "database query failed",
-        ["st.IdxStatus.WriteFailed"] = "database write failed",
+        ["st.IdxStatus.WriteFailed"] = "write failed (file tags or database)",
         ["st.IdxStatus.IndexFailed"] = "the folder can't be indexed",
         ["st.IdxStatus.Panic"] = "core panicked (see the log)",
         ["st.CdcStatus.BadStartWord"] = "not a packet (bad start word)",
@@ -558,12 +558,13 @@ public static class L
         ["st.WireStatus.Unexpected"] = "unexpected packet",
         ["st.WireStatus.DecryptFailed"] = "decryption failed (not paired with this device?)",
         ["st.WireStatus.PairFailed"] = "pairing failed (the device key changed?)",
-        ["st.WireStatus.Rejected"] = "rejected (local playlists are newer)",
+        ["st.WireStatus.Rejected"] = "rejected",
         ["st.WireStatus.WriteFailed"] = "failed to store the data",
         ["st.WireStatus.Busy"] = "the device is busy",
         ["st.WireStatus.Cancelled"] = "cancelled",
         ["st.WireStatus.Internal"] = "internal error",
         ["st.WireStatus.ModeMismatch"] = "the other side runs another mode (sync / send / receive)",
+        ["st.WireStatus.VersionMismatch"] = "the other side runs another app version (packet format): update both",
 
         // v0.21: playlist tabs, covers
         ["playlists.open_tab"] = "Open in a tab",
@@ -573,6 +574,14 @@ public static class L
         ["editor.embed_cover_hint"] = "The picture is written into the tags of the file itself (and syncs with it); the link to a separate cover file is removed.",
         ["msg.embed_bad_image"] = "Not embedded: the picture is unreadable or not PNG / JPG — {0}",
         ["msg.embed_failed"] = "Failed to embed the cover: {0}",
+
+        // v0.22: add to playlist, tags in files
+        ["track.add_to_playlist"] = "Add to playlist",
+        ["track.add_to_playlist_n"] = "Add to playlist ({0})",
+        ["track.new_playlist"] = "New playlist…",
+        ["msg.added_to_playlist"] = "Added {0} track(s) to \"{1}\"",
+        ["msg.already_in_playlist"] = "Already in \"{0}\"",
+        ["msg.tags_write_failed"] = "Tags not saved: the audio file is missing, read-only or of an unsupported format",
     };
 
     private static readonly Dictionary<string, string> Ru = new()
@@ -726,11 +735,11 @@ public static class L
 
         // импорт
         ["import.title"] = "Импорт пакета",
-        ["import.hint"] = "Новые песни из пакета записываются в целевую папку, обложки отдельными файлами — в папку приложения (существующие файлы не перезаписываются), затем всё добавляется в библиотеку. Плейлисты сопоставляются по названию.",
+        ["import.hint"] = "Новые песни из пакета записываются в целевую папку, обложки отдельными файлами — в папку приложения (существующие файлы не перезаписываются), затем всё добавляется в библиотеку. Плейлисты сопоставляются по названию и объединяются с локальными по песням.",
         ["import.packet"] = "Файл пакета",
         ["import.save_to"] = "Куда записать новые файлы",
         ["import.force"] = "Принудительно",
-        ["import.force_hint"] = "Применить, даже если локальные плейлисты новее пакета.",
+        ["import.force_hint"] = "Вернуть плейлисты, удалённые здесь после их изменения в пакете.",
         ["import.run"] = "Импортировать",
         ["import.ready"] = "Выберите файл пакета и целевую папку.",
         ["import.is_dir"] = "Путь к пакету — это папка: {0}",
@@ -899,7 +908,7 @@ public static class L
         ["st.IdxStatus.NoDatabase"] = "ядро работает без базы данных",
         ["st.IdxStatus.NotFound"] = "не найдено в библиотеке",
         ["st.IdxStatus.ReadFailed"] = "ошибка чтения базы",
-        ["st.IdxStatus.WriteFailed"] = "ошибка записи в базу",
+        ["st.IdxStatus.WriteFailed"] = "ошибка записи (теги файла или база)",
         ["st.IdxStatus.IndexFailed"] = "папку не удалось проиндексировать",
         ["st.IdxStatus.Panic"] = "паника ядра (см. лог)",
         ["st.CdcStatus.BadStartWord"] = "это не пакет (неверная сигнатура)",
@@ -1116,12 +1125,13 @@ public static class L
         ["st.WireStatus.Unexpected"] = "неожиданный пакет",
         ["st.WireStatus.DecryptFailed"] = "не удалось расшифровать (устройства не связаны?)",
         ["st.WireStatus.PairFailed"] = "связывание не удалось (ключ устройства изменился?)",
-        ["st.WireStatus.Rejected"] = "отклонено (локальные плейлисты новее)",
+        ["st.WireStatus.Rejected"] = "отклонено",
         ["st.WireStatus.WriteFailed"] = "не удалось сохранить данные",
         ["st.WireStatus.Busy"] = "устройство занято",
         ["st.WireStatus.Cancelled"] = "отменено",
         ["st.WireStatus.Internal"] = "внутренняя ошибка",
         ["st.WireStatus.ModeMismatch"] = "другая сторона в другом режиме (синхронизация / отправка / приём)",
+        ["st.WireStatus.VersionMismatch"] = "у другой стороны другая версия приложения (формат пакета): обновите оба",
 
         // v0.21: playlist tabs, covers
         ["playlists.open_tab"] = "Открыть во вкладке",
@@ -1131,5 +1141,13 @@ public static class L
         ["editor.embed_cover_hint"] = "Картинка записывается в теги самого файла (и синхронизируется с ним); ссылка на отдельный файл обложки убирается.",
         ["msg.embed_bad_image"] = "Не удалось встроить: картинка не читается или не PNG / JPG — {0}",
         ["msg.embed_failed"] = "Не удалось встроить обложку: {0}",
+
+        // v0.22: добавление в плейлист, теги в файлах
+        ["track.add_to_playlist"] = "Добавить в плейлист",
+        ["track.add_to_playlist_n"] = "Добавить в плейлист ({0})",
+        ["track.new_playlist"] = "Новый плейлист…",
+        ["msg.added_to_playlist"] = "Добавлено в «{1}»: {0}",
+        ["msg.already_in_playlist"] = "Уже есть в «{0}»",
+        ["msg.tags_write_failed"] = "Теги не сохранены: аудиофайла нет, он только для чтения или формат не поддерживается",
     };
 }

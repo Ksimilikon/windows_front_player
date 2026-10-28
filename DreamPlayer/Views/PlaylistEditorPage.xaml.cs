@@ -131,6 +131,9 @@ public sealed partial class PlaylistEditorPage : UserControl, ITabPage
             _assembled.Insert(i++, t);
     }
 
+    /// songs from elsewhere ("Add to playlist" of a song menu).
+    public void AddTracks(IEnumerable<Track> tracks) => Add(tracks);
+
     private void Remove(IEnumerable<Track> tracks)
     {
         var drop = tracks.Select(t => t.Key).ToHashSet();

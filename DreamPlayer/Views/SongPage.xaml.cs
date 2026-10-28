@@ -83,6 +83,7 @@ public sealed partial class SongPage : UserControl, ITabPage
         PlayButton.IsEnabled = !IsPlaying;
         EditButton.IsEnabled = t.Id is not null;
         FolderButton.IsEnabled = t.Path is not null;
+        AddToPlaylistButton.IsEnabled = t.Id is not null;
         SyncVolume(IsPlaying ? _p.TrackVolume : t.Volume);
         VolumeSlider.IsEnabled = t.Id is not null || IsPlaying;
         FillMeta(t);
@@ -200,4 +201,11 @@ public sealed partial class SongPage : UserControl, ITabPage
     }
 
     private void Folder_Click(object sender, RoutedEventArgs e) => Ui.ShowInFolder(_track?.Path);
+
+    /// the submenu of song menus' "Add to playlist", as a flyout of the button.
+    private void AddToPlaylist_Click(object sender, RoutedEventArgs e)
+    {
+        if (_track is not null && ShellView.Current?.AddToPlaylistItem([_track]).Sub is { } rows)
+            Ui.Menu([.. rows]).ShowAt((FrameworkElement)sender);
+    }
 }

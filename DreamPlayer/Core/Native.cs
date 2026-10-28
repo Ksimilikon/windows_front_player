@@ -81,6 +81,7 @@ public enum CdcStatus : uint
     CountMismatch = 10,
 
     // import decisions (100..=199)
+    /// no longer returned: playlists merge since packet v0.13. Reserved.
     Outdated = 100,
 
     // core errors (200..)
@@ -175,6 +176,8 @@ public enum WireStatus : uint
     Cancelled = 8,
     Internal = 9,
     ModeMismatch = 10,
+    /// the other side runs another packet version: one of the apps is older.
+    VersionMismatch = 11,
 }
 
 /// what `sync_new_send` sends.
@@ -425,7 +428,8 @@ internal static unsafe partial class Native
     internal static partial IdxStatus IdxIndexDir(string? dir);
 
     [LibraryImport(Lib, EntryPoint = "idx_set_track_meta", StringMarshalling = StringMarshalling.Utf8)]
-    internal static partial IdxStatus IdxSetTrackMeta(long id, string? title, nint* artists, nuint artistsLen);
+    internal static partial IdxStatus IdxSetTrackMeta(long id, string? title, nint* artists, nuint artistsLen,
+        string? album, nint* genres, nuint genresLen);
 
     [LibraryImport(Lib, EntryPoint = "idx_set_track_album", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial IdxStatus IdxSetTrackAlbum(long id, string? album);

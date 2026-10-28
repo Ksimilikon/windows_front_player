@@ -76,6 +76,8 @@ public sealed partial class ShellView : UserControl
         SeekSlider.AddHandler(PointerCaptureLostEvent, new PointerEventHandler((_, _) => EndSeek()), true);
 
         AddAccelerators();
+        PreviewKeyDown += Shell_PreviewKeyDown;
+        PreviewKeyUp += Shell_PreviewKeyUp;
         SyncBar();
         Loaded += (_, _) => ReportStartup();
     }
@@ -221,7 +223,9 @@ public sealed partial class ShellView : UserControl
         Open(SongKey, L.T("tab.song"), "", () => new SongPage(track), at: AfterMain());
     }
 
-    public void OpenPlaylistEditor(PlaylistView? pl)
+    /// `add` — songs to put into the edited playlist (into an already open
+    /// editor too).
+    public void OpenPlaylistEditor(PlaylistView? pl, IReadOnlyList<Track>? add = null)
     {
         if (pl is { IsPool: true })
         {
@@ -230,7 +234,45 @@ public sealed partial class ShellView : UserControl
         }
         var key = pl is null ? "pl-new" : $"pl-edit:{pl.Name}";
         var header = pl is null ? L.T("tab.new_playlist") : L.F("tab.edit_playlist", pl.Name);
-        Open(key, header, pl is null ? "" : "", () => new PlaylistEditorPage(pl));
+        var tab = Open(key, header,pl is null ? "" : "", () => new PlaylistEditorPage(pl));
+        if (add is { Count: > 0 })
+            ((PlaylistEditorPage)tab.Content).AddTracks(add);
+    }
+
+    /// the "Add to playlist" submenu of a song menu: a new playlist (its
+    /// editor opens with the songs) or an existing one (`except` — the
+    /// playlist the songs are shown from). Songs not in the library are skipped.
+    public Ui.Item AddToPlaylistItem(IReadOnlyList<Track> tracks, string? except = null)
+    {
+        var songs = tracks.Where(t => t.Id is not null).ToList();
+        var rows = new List<Ui.Item?> { new(L.T("track.new_playlist"), "", () => OpenPlaylistEditor(null, songs)) };
+        var existing = Library.Instance.Playlists.Where(p => !p.IsPool && p.Name != except).ToList();
+        if (existing.Count > 0)
+            rows.Add(null);
+        rows.AddRange(existing.Select(p => new Ui.Item(p.Name, "", () => AddToPlaylist(p, songs))));
+        var text = songs.Count > 1 ? L.F("track.add_to_playlist_n", songs.Count) : L.T("track.add_to_playlist");
+        return new(text, "", () => { }, songs.Count > 0, Sub: rows);
+    }
+
+    /// appends the songs that aren't in the playlist yet.
+    private void AddToPlaylist(PlaylistView pl, IReadOnlyList<Track> tracks)
+    {
+        var ids = pl.Tracks.Select(t => t.Id).OfType<long>().ToList();
+        var have = ids.ToHashSet();
+        var added = tracks.Select(t => t.Id).OfType<long>().Where(have.Add).ToList();
+        if (added.Count == 0)
+        {
+            Notify(L.F("msg.already_in_playlist", pl.Name), LogLevel.Info);
+            return;
+        }
+        var st = CoreApi.Library.SavePlaylist(pl.Name, [.. ids, .. added], pl.CoverArt);
+        if (st != IdxStatus.Ok)
+        {
+            Notify(L.F("msg.playlist_save_failed", CoreApi.Describe(st)), LogLevel.Error);
+            return;
+        }
+        Notify(L.F("msg.added_to_playlist", added.Count, pl.Name), LogLevel.Ok);
+        ReloadLibrary();
     }
 
     public void OpenTrackEditor(Track t)
@@ -626,4 +668,32 @@ public sealed partial class ShellView : UserControl
         Add(VirtualKey.E, ctrl, () => OpenExport());
         Add(VirtualKey.N, ctrl, () => OpenPlaylistEditor(null));
     }
+
+    /// plain Space anywhere in the window — play / pause, before the focused
+    /// control (a button, a list) takes it; text fields keep typing spaces.
+    /// Dialogs and menus are popups outside the shell and aren't affected.
+    private void Shell_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (!IsPlainSpace(e))
+            return;
+        if (!e.KeyStatus.WasKeyDown)
+            _p.TogglePause();
+        e.Handled = true;
+    }
+
+    /// the key up too: a focused button clicks on it otherwise.
+    private void Shell_PreviewKeyUp(object sender, KeyRoutedEventArgs e)
+    {
+        if (IsPlainSpace(e))
+            e.Handled = true;
+    }
+
+    private bool IsPlainSpace(KeyRoutedEventArgs e) =>
+        e.Key == VirtualKey.Space
+        && _p.Current is not null
+        && e.OriginalSource is not (TextBox or PasswordBox or RichEditBox or AutoSuggestBox)
+        && !Down(VirtualKey.Control) && !Down(VirtualKey.Shift) && !Down(VirtualKey.Menu);
+
+    private static bool Down(VirtualKey key) =>
+        InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 }
